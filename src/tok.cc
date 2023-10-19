@@ -36,6 +36,7 @@ std::unordered_map<std::string, int> tok_map = {
 	{ "default", tok_default },
 	{ "struct", tok_struct },
 	{ "union", tok_union },
+	{ "enum", tok_enum },
 	{ "typedef", tok_typedef },
 	{ "sizeof", tok_sizeof },
 	// unused?
@@ -62,5 +63,15 @@ std::unordered_map<std::string, int> tok_map = {
 	{ "|", tok_or_assign },
 
 };
+
+std::string back_tok_map(int type)
+{
+	for (auto [k, v] : tok_map) {
+		if (v == type) {
+			return k;
+		}
+	}
+	return std::string{ (char)type };
+}
 
 }

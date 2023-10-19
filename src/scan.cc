@@ -1,4 +1,5 @@
 
+#include <cstddef>
 #include <cstdio>
 #include <exception>
 
@@ -254,6 +255,20 @@ tok_t scan(stream &ss)
 		type = tok_map[str];
 	}
 	return { type, str };
+}
+
+void unscan(stream &ss, tok_t tok)
+{
+	for (size_t i = 0; i < tok.str.length(); i--) {
+		ss.unget();
+	}
+}
+
+void unscan(stream &ss, size_t len)
+{
+	while (len--) {
+		ss.unget();
+	}
 }
 
 }

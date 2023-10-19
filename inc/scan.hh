@@ -29,5 +29,7 @@ std::string get_num(stream &ss);
 std::string get_char(stream &ss);
 std::string get_string(stream &ss);
 tok_t scan(stream &ss);
+void unscan(stream &ss, tok_t tok);
+void unscan(stream &ss, size_t len);
 
 }

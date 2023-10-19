@@ -5,6 +5,11 @@
 namespace neko_cc
 {
 
+void error(std::string msg)
+{
+	throw std::runtime_error(msg);
+}
+
 void error(std::string msg, stream &ss, bool output_near)
 {
 	std::string m = msg;

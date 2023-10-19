@@ -49,6 +49,7 @@ enum tok_enum {
 
 	tok_struct,
 	tok_union,
+	tok_enum,
 	tok_typedef,
 	tok_sizeof,
 
@@ -82,5 +83,6 @@ enum tok_enum {
 };
 
 extern std::unordered_map<std::string, int> tok_map;
+std::string back_tok_map(int type);
 
 }
