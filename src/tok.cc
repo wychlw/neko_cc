@@ -1,0 +1,66 @@
+#include "tok.hh"
+#include <cstdlib>
+
+namespace neko_cc
+{
+
+std::unordered_map<std::string, int> tok_map = {
+	{ "char", tok_char },
+	{ "short", tok_short },
+	{ "int", tok_int },
+	{ "signed", tok_signed },
+	{ "unsigned", tok_unsigned },
+	{ "long", tok_long },
+	{ "void", tok_void },
+	{ "float", tok_float },
+	{ "double", tok_double },
+	{ "const", tok_const },
+	{ "register", tok_register },
+	{ "auto", tok_auto },
+	{ "static", tok_static },
+	{ "extern", tok_extern },
+	{ "inline", tok_inline },
+	{ "restrict", tok_restrict },
+	{ "volatile", tok_volatile },
+	{ "if", tok_if },
+	{ "else", tok_else },
+	{ "while", tok_while },
+	{ "break", tok_break },
+	{ "return", tok_return },
+	{ "for", tok_for },
+	{ "goto", tok_goto },
+	{ "do", tok_do },
+	{ "continue", tok_continue },
+	{ "switch", tok_switch },
+	{ "case", tok_case },
+	{ "default", tok_default },
+	{ "struct", tok_struct },
+	{ "union", tok_union },
+	{ "typedef", tok_typedef },
+	{ "sizeof", tok_sizeof },
+	// unused?
+	{ "->", tok_pointer },
+	{ "++", tok_inc },
+	{ "--", tok_dec },
+	{ "<<", tok_lshift },
+	{ ">>", tok_rshift },
+	{ "<=", tok_le },
+	{ ">=", tok_ge },
+	{ "==", tok_eq },
+	{ "!=", tok_ne },
+	{ "&&", tok_land },
+	{ "||", tok_lor },
+	{ "+=", tok_add_assign },
+	{ "-=", tok_sub_assign },
+	{ "*=", tok_mul_assign },
+	{ "/=", tok_div_assign },
+	{ "%=", tok_mod_assign },
+	{ "<<=", tok_lshift_assign },
+	{ ">>=", tok_rshift_assign },
+	{ "&=", tok_and_assign },
+	{ "^=", tok_xor_assign },
+	{ "|", tok_or_assign },
+
+};
+
+}
