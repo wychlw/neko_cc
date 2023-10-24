@@ -14,8 +14,17 @@ class not_implemented : public std::logic_error
     not_implemented() : std::logic_error("not implemented") {}
 };
 
-void error(std::string msg);
-void error(std::string msg, stream &ss, bool output_near = false);
+#define error(msg, ss, on) _error(__func__, __LINE__, msg, ss, on)
+
+void _error(std::string msg);
+void _error(std::string msg, stream &ss, bool output_near = false);
+void _error(std::string func, int line, std::string msg, stream &ss, bool output_near = false);
 void info(std::string msg);
+
+#define anal_debug() _anal_debug(__func__)
+#define anal_debug_tok(tok) _anal_debug(__func__, tok)
+#define anal_debug_msg(msg) _anal_debug(__func__, "", msg)
+#define anal_debug_tok_msg(tok, msg) _anal_debug(__func__, tok, msg)
+void _anal_debug(std::string pos,std::string tok_name = "", std::string msg = "");
 
 }

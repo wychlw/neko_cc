@@ -1,0 +1,67 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Iinc",
+      "-o",
+      "build/t0",
+      "main.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/main.cc",
+    "output": "/home/lw/Project/compiler/build/t0"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Iinc",
+      "-o",
+      "build/t0",
+      "src/anal.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/anal.cc",
+    "output": "/home/lw/Project/compiler/build/t0"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Iinc",
+      "-o",
+      "build/t0",
+      "src/out.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/out.cc",
+    "output": "/home/lw/Project/compiler/build/t0"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Iinc",
+      "-o",
+      "build/t0",
+      "src/scan.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/scan.cc",
+    "output": "/home/lw/Project/compiler/build/t0"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Iinc",
+      "-o",
+      "build/t0",
+      "src/tok.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/tok.cc",
+    "output": "/home/lw/Project/compiler/build/t0"
+  }
+]
