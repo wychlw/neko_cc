@@ -94,11 +94,36 @@ struct type_t {
 		target_type = "";
 		ptr_to = nullptr;
 	}
+
+	void output_type(std::ostream &ss, int level = 0);
+	friend std::ostream &operator<<(std::ostream &ss, type_t &type)
+	{
+		type.output_type(ss);
+		return ss;
+	}
 };
 
 struct var_t {
 	std::string name;
 	type_t type;
+
+	void output_var(std::ostream &ss, int level = 0)
+	{
+		for (int i = 0; i < level; i++) {
+			ss << "\t";
+		}
+		ss << "var name: " << name << std::endl;
+		for (int i = 0; i < level; i++) {
+			ss << "\t";
+		}
+		ss << "has type:" << std::endl;
+		type.output_type(ss, level + 1);
+	}
+	friend std::ostream &operator<<(std::ostream &ss, var_t &var)
+	{
+		var.output_var(ss);
+		return ss;
+	}
 };
 
 struct context_t {
@@ -175,19 +200,6 @@ struct context_t {
 };
 }
 
-// namespace neko_cc
-// {
-// // basic types decl
-// const type_t ptr = { .name = "ptr", .size = 8 };
-// const type_t i8 = { .name = "i8", .size = 1 };
-// const type_t i16 = { .name = "i16", .size = 2 };
-// const type_t i32 = { .name = "i32", .size = 4 };
-// const type_t i64 = { .name = "i64", .size = 8 };
-// const type_t f32 = { .name = "f32", .size = 4 };
-// const type_t f64 = { .name = "f64", .size = 8 };
-// const type_t va_args = { .name = "va_args", .size = 0 };
-// }
-
 namespace neko_cc
 {
 #define UNFIN
@@ -236,5 +248,97 @@ static bool is_strong_class_specifier(tok_t tok);
 static bool is_type_specifier(tok_t tok, const type_t type = type_t());
 static void try_regulate_basic(stream &ss, type_t &type);
 static bool is_type_qualifier(tok_t tok);
+
+}
+
+namespace neko_cc
+{
+inline void type_t::output_type(std::ostream &ss, int level)
+{
+	for (int i = 0; i < level; i++) {
+		ss << "\t";
+	}
+	ss << "type name: " << name << " size: " << size << std::endl;
+
+	for (int i = 0; i < level; i++) {
+		ss << "\t";
+	}
+	ss << "type: ";
+	if (type == type_unknown) {
+		ss << "type_unknown" << std::endl;
+	} else if (type == type_norm) {
+		ss << "type_norm" << std::endl;
+	} else if (type == type_basic) {
+		ss << "type_basic" << std::endl;
+	} else if (type == type_struct) {
+		ss << "type_struct" << std::endl;
+	} else if (type == type_union) {
+		ss << "type_union" << std::endl;
+	} else if (type == type_enum) {
+		ss << "type_enum" << std::endl;
+	} else if (type == type_typedef) {
+		ss << "type_typedef" << std::endl;
+	} else if (type == type_func) {
+		ss << "type_func" << std::endl;
+	} else if (type == type_pointer) {
+		ss << "type_pointer" << std::endl;
+	} else if (type == type_array) {
+		ss << "type_array" << std::endl;
+	}
+
+	for (int i = 0; i < level; i++) {
+		ss << "\t";
+	}
+	ss << "properties: ";
+	if (type == type_unknown) {
+		ss << "none" << std::endl;
+	} else if (type == type_norm) {
+		ss << "none" << std::endl;
+	} else if (type == type_basic) {
+		ss << "has_signed: " << has_signed << " ";
+		ss << "is_unsigned: " << is_unsigned << " ";
+		ss << "is_char: " << is_char << " ";
+		ss << "is_short: " << is_short << " ";
+		ss << "is_int: " << is_int << " ";
+		ss << "is_long: " << is_long << " ";
+		ss << "is_float: " << is_float << " ";
+		ss << "is_double: " << is_double << " ";
+		ss << std::endl;
+	} else if (type == type_struct) {
+		ss << "inner_vars: ";
+		for (auto var : inner_vars) {
+			var.output_var(ss, level + 1);
+		}
+	} else if (type == type_union) {
+		ss << "inner_vars: ";
+		for (auto var : inner_vars) {
+			var.output_var(ss, level + 1);
+		}
+	} else if (type == type_enum) {
+		ss << "none" << std::endl;
+	} else if (type == type_typedef) {
+		ss << "none" << std::endl;
+	} else if (type == type_func) {
+		ss << "ret_type: " << std::endl;
+		ret_type->output_type(ss, level + 1);
+		for (int i = 0; i < level; i++) {
+			ss << "\t";
+		}
+		ss << "args_types: " << std::endl;
+		for (auto arg_type : args_type) {
+			arg_type.output_type(ss, level + 1);
+			for (int i = 0; i < level; i++) {
+				ss << "\t";
+			}
+			ss << "---" << std::endl;
+		}
+	} else if (type == type_pointer) {
+		ss << "pointer to:" << std::endl;
+		ptr_to->output_type(ss, level + 1);
+	} else if (type == type_array) {
+		ss << "array of:" << std::endl;
+		ptr_to->output_type(ss, level + 1);
+	}
+}
 
 }

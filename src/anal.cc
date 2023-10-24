@@ -37,6 +37,7 @@ static tok_t get_tok(stream &ss)
 {
 	tok_t t = nxt_tok(ss);
 	tok_buf.pop_front();
+	// info("GOT TOKEN: " + t.str);
 	return t;
 }
 
@@ -138,6 +139,8 @@ void external_declaration(stream &ss, context_t &ctx)
 	var_t var;
 	std::vector<var_t> args =
 		declarator(ss, ctx, make_shared<type_t>(type), var);
+
+	std::cout << var << std::endl;
 
 	// now if next is an '{', then it is a function definition
 	if (nxt_tok(ss).type == '{') {
@@ -352,6 +355,32 @@ static void try_regulate_basic(stream &ss, type_t &type)
 	}
 	if (type.is_long && type.is_int) {
 		type.is_int = 0;
+	}
+
+	if (type.is_char) {
+		type.size = 1;
+		type.name = "char";
+	} else if (type.is_short) {
+		type.size = 2;
+		type.name = "short";
+	} else if (type.is_int) {
+		type.size = 4;
+		type.name = "int";
+	} else if (type.is_long == 1 && !type.is_double) {
+		type.size = 8;
+		type.name = "long";
+	} else if (type.is_long == 2) {
+		type.size = 8;
+		type.name = "long long";
+	} else if (type.is_float) {
+		type.size = 4;
+		type.name = "float";
+	} else if (type.is_double) {
+		type.size = 8;
+		type.name = "double";
+	} else if (type.is_long == 1 && type.is_double) {
+		type.size = 8;
+		type.name = "long double";
 	}
 }
 void type_specifier(stream &ss, context_t &ctx, type_t &type)
@@ -589,9 +618,11 @@ std::vector<var_t> direct_declarator(stream &ss, context_t &ctx,
 	anal_debug();
 
 	std::vector<var_t> args;
+	bool hit_ident = false;
 	if (nxt_tok(ss).type == tok_ident) {
 		tok_t tok = get_tok(ss);
 		var.name = tok.str;
+		hit_ident = true;
 	} else if (nxt_tok(ss).type == '(') {
 		match('(', ss);
 		declarator(ss, ctx, type, var);
@@ -610,15 +641,15 @@ std::vector<var_t> direct_declarator(stream &ss, context_t &ctx,
 			is_arr = true;
 			int arr_len = 0;
 			if (nxt_tok(ss).type != ']') {
-				constant_expression(ss, ctx);
+				arr_len = constant_expression(ss, ctx);
 			}
 			std::shared_ptr<type_t> arr_type =
 				make_shared<type_t>();
 			arr_type->name = get_ptr_type_name(type->name);
 			arr_type->type = type_t::type_array;
 			arr_type->size = type->size * arr_len;
-			arr_type->ptr_to = type;
-			type = arr_type;
+			arr_type->ptr_to = make_shared<type_t>(*type);
+			*type = *arr_type;
 			match(']', ss);
 		} else {
 			if (is_arr) {
@@ -640,15 +671,18 @@ std::vector<var_t> direct_declarator(stream &ss, context_t &ctx,
 			}
 			std::shared_ptr<type_t> func_type =
 				make_shared<type_t>();
-			func_type->name = type->name;
-			type->name = get_func_type_name(type->name);
+			func_type->name = "func_" + type->name;
 			func_type->type = type_t::type_func;
 			func_type->size = 0;
-			func_type->ret_type = type;
+			func_type->ret_type = make_shared<type_t>(*type);
 			func_type->args_type = args_type;
-			type = func_type;
+			*type = *func_type;
 			match(')', ss);
 		}
+	}
+
+	if (hit_ident) {
+		var.type = *type;
 	}
 
 	return args;

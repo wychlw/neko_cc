@@ -1,7 +1,8 @@
 #include <iostream>
+#include <string>
 
 #include "out.hh"
-#include <string>
+
 
 namespace neko_cc
 {
