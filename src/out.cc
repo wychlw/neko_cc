@@ -3,13 +3,13 @@
 
 #include "out.hh"
 
-
 namespace neko_cc
 {
 
-void _error(std::string msg)
+void _error(std::string func, int line, std::string msg)
 {
-	throw std::runtime_error(msg);
+	throw std::runtime_error(func + ", " + std::to_string(line) + " : " +
+				 msg);
 }
 
 void _error(std::string msg, stream &ss, bool output_near)

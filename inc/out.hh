@@ -16,9 +16,9 @@ class not_implemented : public std::logic_error
 };
 
 #define error(msg, ss, on) _error(__func__, __LINE__, msg, ss, on)
+#define err_msg(msg) _error(__func__, __LINE__, msg)
 
-void _error(std::string msg);
-void _error(std::string msg, stream &ss, bool output_near = false);
+void _error(std::string func, int line, std::string msg);
 void _error(std::string func, int line, std::string msg, stream &ss, bool output_near = false);
 void info(std::string msg);
 

@@ -146,7 +146,7 @@ static std::string get_trans_char(stream &ss)
 {
 	std::string res = "";
 	if (is_digit(ss.peek())) {
-		char ch = 0;
+		int ch = 0;
 		for (int i = 0; i < 3; i++) {
 			if (is_digit(ss.peek())) {
 				ch *= 8;
@@ -154,6 +154,9 @@ static std::string get_trans_char(stream &ss)
 			} else {
 				break;
 			}
+		}
+		if (ch >= 256) {
+			error("Too big for a char", ss, true);
 		}
 		res += ch;
 	} else {
@@ -181,6 +184,9 @@ std::string get_string(stream &ss)
 	std::string res = "";
 	match_ss('"', ss);
 	while (ss.peek() != '"') {
+		if (ss.peek() == EOF) {
+			error("unterminated string", ss, true);
+		}
 		if (ss.peek() == '\\') {
 			res += ss.get();
 		}
