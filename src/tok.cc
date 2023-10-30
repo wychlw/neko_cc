@@ -5,6 +5,7 @@ namespace neko_cc
 {
 
 std::unordered_map<std::string, int> tok_map = {
+	{ "NULL", tok_null },
 	{ "char", tok_char },
 	{ "short", tok_short },
 	{ "int", tok_int },

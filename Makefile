@@ -1,5 +1,5 @@
 all:
-	g++ main.cc src/*.cc -Iinc  -o build/t0 -Og -g
+	g++ main.cc src/*.cc -Iinc  -o build/neko_cc -Og -g
 
 run: all
-	./build/t0
+	./build/neko_cc

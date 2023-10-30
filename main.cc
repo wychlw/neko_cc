@@ -1,3 +1,4 @@
+#include "out.hh"
 #include "tok.hh"
 #include <bits/stdc++.h>
 #include "scan.hh"
@@ -18,8 +19,10 @@ int main()
 	// 	tok = scan(f);
 	// }
 
+	log_level = ERROR;
+
 	std::fstream f;
-	f.open("test/tmp_test.txt", std::ios::in);
+	f.open("test/tmp_test.c", std::ios::in);
 	std::fstream out;
 	out.open("test/out.ll", std::ios::out);
 	init_emit_engine(out);

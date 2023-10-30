@@ -15,6 +15,14 @@ class not_implemented : public std::logic_error
     not_implemented() : std::logic_error("not implemented") {}
 };
 
+enum log_level_t
+{
+    INFO,
+    DEBUG,
+    ERROR
+};
+extern log_level_t log_level;
+
 #define error(msg, ss, on) _error(__func__, __LINE__, msg, ss, on)
 #define err_msg(msg) _error(__func__, __LINE__, msg)
 

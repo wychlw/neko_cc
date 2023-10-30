@@ -19,6 +19,7 @@ void emit(const string &s);
 void emit_line(const string &s);
 
 void reset_vreg();
+void inc_vreg();
 string get_vreg();
 
 string get_type_repr(const type_t &type);

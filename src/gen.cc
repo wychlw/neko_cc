@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <memory>
 #include <sstream>
 
 #include "gen.hh"
@@ -44,9 +45,13 @@ void reset_vreg()
 {
 	vreg = 0;
 }
+void inc_vreg()
+{
+	vreg++;
+}
 string get_vreg()
 {
-	return "%" + std::to_string(vreg++);
+	return "%vr_" + std::to_string(vreg++);
 }
 
 string get_type_repr(const type_t &type)
@@ -146,8 +151,12 @@ var_t get_item_from_arrptr(const var_t &rs, const var_t &arr_offset)
 		     get_type_repr(*arr_offset.type) + " " + arr_offset.name;
 	emit_line(prt);
 	var_t ret;
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = rs.type->ptr_to;
 	ret.name = rd;
-	ret.type = rs.type->ptr_to;
+	ret.is_alloced = true;
+	ret.type = std::make_shared<type_t>(ptr_type);
 	return ret;
 }
 
@@ -157,9 +166,14 @@ var_t get_item_from_structptr(const var_t &rs, const int &offset)
 	string prt = rd + " = getelementptr " + get_type_repr(*rs.type) +
 		     ", i64 0, i64 " + std::to_string(offset);
 	emit_line(prt);
+
 	var_t ret;
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = rs.type->ptr_to->inner_vars[offset].type;
 	ret.name = rd;
-	ret.type = rs.type->ptr_to->inner_vars[offset].type;
+	ret.is_alloced = true;
+	ret.type = std::make_shared<type_t>(ptr_type);
 	return ret;
 }
 
@@ -367,37 +381,37 @@ var_t emit_conv_to(const var_t &rs, const type_t &type)
 
 void emit_match_type(var_t &v1, var_t &v2)
 {
-	bool conv_to_v1 = false;
+	bool conv_v1 = false;
 	if (is_type_i(*v1.type) && is_type_i(*v2.type)) {
 		if (v1.type->size < v2.type->size) {
-			conv_to_v1 = true;
+			conv_v1 = true;
 		} else {
-			conv_to_v1 = false;
+			conv_v1 = false;
 		}
 	} else if (is_type_f(*v1.type) && is_type_f(*v2.type)) {
 		if (v1.type->size < v2.type->size) {
-			conv_to_v1 = true;
+			conv_v1 = true;
 		} else {
-			conv_to_v1 = false;
+			conv_v1 = false;
 		}
 	} else if (is_type_p(*v1.type) && is_type_p(*v2.type)) {
 		return;
 	} else if (is_type_p(*v1.type) && is_type_i(*v2.type)) {
-		conv_to_v1 = false;
+		conv_v1 = true;
 	} else if (is_type_i(*v1.type) && is_type_p(*v2.type)) {
-		conv_to_v1 = true;
+		conv_v1 = false;
 	} else if (is_type_f(*v1.type) && is_type_i(*v2.type)) {
-		conv_to_v1 = true;
+		conv_v1 = false;
 	} else if (is_type_i(*v1.type) && is_type_f(*v2.type)) {
-		conv_to_v1 = false;
+		conv_v1 = true;
 	} else {
 		err_msg("emit_match_type: cannot match type");
 	}
 
-	bool is_unsigned = conv_to_v1 ? v1.type->is_unsigned :
-					v2.type->is_unsigned;
+	bool is_unsigned = conv_v1 ? v2.type->is_unsigned :
+					v1.type->is_unsigned;
 
-	if (conv_to_v1) {
+	if (conv_v1) {
 		v1 = emit_conv_to(v1, *v2.type);
 	} else {
 		v2 = emit_conv_to(v2, *v1.type);
@@ -442,9 +456,15 @@ var_t emit_alloc(const type_t &type, const string &name)
 	var_t ret;
 	ret.name = rd;
 	type_t new_type;
-	new_type.name = get_ptr_type_name(type.name);
-	new_type.type = type_t::type_pointer;
-	new_type.ptr_to = std::make_shared<type_t>(type);
+	if (type.type != type_t::type_array) {
+		new_type.name = get_ptr_type_name(type.name);
+		new_type.size = 8;
+		new_type.type = type_t::type_pointer;
+		new_type.ptr_to = std::make_shared<type_t>(type);
+	} else {
+		new_type = type;
+		new_type.type = type_t::type_pointer;
+	}
 	ret.type = std::make_shared<type_t>(new_type);
 	ret.is_alloced = true;
 	return ret;
@@ -561,8 +581,9 @@ var_t emit_eq(const var_t &v1, const var_t &v2)
 var_t emit_call(const var_t &func, const std::vector<var_t> &args)
 {
 	string rd = get_vreg();
-	string prt = rd + " = call " + get_type_repr(*func.type->ret_type) +
-		     " " + func.name + "(";
+	string prt = rd + " = call " +
+		     get_type_repr(*func.type->ptr_to->ret_type) + " " +
+		     func.name + "(";
 	for (const auto &i : args) {
 		prt += get_type_repr(*i.type);
 		prt += " " + i.name + ", ";
@@ -575,7 +596,7 @@ var_t emit_call(const var_t &func, const std::vector<var_t> &args)
 	emit_line(prt);
 	var_t ret;
 	ret.name = rd;
-	ret.type = func.type->ret_type;
+	ret.type = func.type->ptr_to->ret_type;
 	return ret;
 }
 

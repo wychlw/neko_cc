@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -116,12 +117,19 @@ struct var_t {
 		for (int i = 0; i < level; i++) {
 			*ss << "\t";
 		}
-		*ss << "var name: " << name << std::endl;
+		*ss << "var name: " << name << " alloc: " << is_alloced
+		    << std::endl;
 		for (int i = 0; i < level; i++) {
 			*ss << "\t";
 		}
 		*ss << "has type:" << std::endl;
 		type->output_type(ss, level + 1);
+	}
+	std::string str() const
+	{
+		std::stringstream ss;
+		output_var(&ss);
+		return ss.str();
 	}
 	friend std::ostream &operator<<(std::ostream &ss, var_t &var)
 	{
@@ -157,14 +165,6 @@ struct context_t {
 
 	context_t(context_t &rhs) = delete;
 	context_t &operator=(context_t &rhs) = delete;
-	context_t(context_t *prev, size_t _label)
-		: prev_context(prev)
-		, vars()
-		, types()
-		, enums()
-		, fun_env(prev->fun_env)
-	{
-	}
 	context_t(context_t *_prev = nullptr,
 		  std::unordered_map<std::string, var_t> _vars = {},
 		  std::unordered_map<std::string, type_t> _types = {})
@@ -172,8 +172,12 @@ struct context_t {
 		, vars(_vars)
 		, types(_types)
 		, enums()
-		, fun_env()
 	{
+		if (_prev != nullptr) {
+			fun_env = _prev->fun_env;
+		} else {
+			fun_env = nullptr;
+		}
 	}
 
 	type_t get_type(std::string type_name)
@@ -202,7 +206,9 @@ struct context_t {
 			ctx_now = ctx_now->prev_context;
 		}
 		var_t unknown_var;
-		unknown_var.type->type = type_t::type_unknown;
+		type_t unknown_type;
+		unknown_type.type = type_t::type_unknown;
+		unknown_var.type = std::make_shared<type_t>(unknown_type);
 		unknown_var.name = "";
 		return unknown_var;
 	}
@@ -297,6 +303,7 @@ var_t expression(stream &ss, context_t &ctx);
 void expression_statement(stream &ss, context_t &ctx);
 void jump_statement(stream &ss, context_t &ctx);
 void selection_statement(stream &ss, context_t &ctx);
+void iteration_statement(stream &ss, context_t &ctx);
 
 tok_t nxt_tok(stream &ss);
 tok_t get_tok(stream &ss);

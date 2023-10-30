@@ -6,6 +6,8 @@
 namespace neko_cc
 {
 
+log_level_t log_level;
+
 void _error(std::string func, int line, std::string msg)
 {
 	throw std::runtime_error(func + ", " + std::to_string(line) + " : " +
@@ -39,11 +41,17 @@ void _error(std::string func, int line, std::string msg, stream &ss,
 
 void info(std::string msg)
 {
+	if (log_level > INFO) {
+		return;
+	}
 	std::cout << "INFO: " << msg << std::endl;
 }
 
 void _anal_debug(std::string pos, std::string tok_name, std::string msg)
 {
+	if (log_level > DEBUG) {
+		return;
+	}
 	std::cout << "DEBUG: " << pos << " " << tok_name << std::endl;
 	if (msg.length() > 0) {
 		std::cout << "\tMSG: " << msg << std::endl;
