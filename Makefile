@@ -1,2 +1,5 @@
 all:
-	g++ neko_cc.cc src/*.cc -Iinc  -o build/t0 
+	g++ main.cc src/*.cc -Iinc  -o build/neko_cc -Og -g
+
+run: all
+	./build/neko_cc

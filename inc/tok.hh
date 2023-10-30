@@ -14,6 +14,7 @@ enum tok_enum {
 	tok_int_lit,
 	tok_float_lit,
 	tok_string_lit,
+	tok_null,
 
 	// keywords
 	tok_char,

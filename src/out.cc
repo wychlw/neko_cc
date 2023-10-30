@@ -1,16 +1,20 @@
 #include <iostream>
+#include <string>
 
 #include "out.hh"
 
 namespace neko_cc
 {
 
-void error(std::string msg)
+log_level_t log_level;
+
+void _error(std::string func, int line, std::string msg)
 {
-	throw std::runtime_error(msg);
+	throw std::runtime_error(func + ", " + std::to_string(line) + " : " +
+				 msg);
 }
 
-void error(std::string msg, stream &ss, bool output_near)
+void _error(std::string msg, stream &ss, bool output_near)
 {
 	std::string m = msg;
 	if (output_near) {
@@ -28,9 +32,30 @@ void error(std::string msg, stream &ss, bool output_near)
 	throw std::runtime_error(m);
 }
 
+void _error(std::string func, int line, std::string msg, stream &ss,
+	    bool output_near)
+{
+	_error(func + ", " + std::to_string(line) + " : " + msg, ss,
+	       output_near);
+}
+
 void info(std::string msg)
 {
-	std::cout <<"INFO: "<< msg << std::endl;
+	if (log_level > INFO) {
+		return;
+	}
+	std::cout << "INFO: " << msg << std::endl;
+}
+
+void _anal_debug(std::string pos, std::string tok_name, std::string msg)
+{
+	if (log_level > DEBUG) {
+		return;
+	}
+	std::cout << "DEBUG: " << pos << " " << tok_name << std::endl;
+	if (msg.length() > 0) {
+		std::cout << "\tMSG: " << msg << std::endl;
+	}
 }
 
 }

@@ -5,6 +5,7 @@ namespace neko_cc
 {
 
 std::unordered_map<std::string, int> tok_map = {
+	{ "NULL", tok_null },
 	{ "char", tok_char },
 	{ "short", tok_short },
 	{ "int", tok_int },
@@ -66,6 +67,21 @@ std::unordered_map<std::string, int> tok_map = {
 
 std::string back_tok_map(int type)
 {
+	if (type == tok_eof) {
+		return "EOF";
+	}
+	if (type == tok_ident) {
+		return "ident";
+	}
+	if (type == tok_int_lit) {
+		return "int lit";
+	}
+	if (type == tok_float_lit) {
+		return "float lit";
+	}
+	if (type == tok_string_lit) {
+		return "string lit";
+	}
 	for (auto [k, v] : tok_map) {
 		if (v == type) {
 			return k;
