@@ -1,3 +1,12 @@
+/**
+ * @file out.hh
+ * @author 泠妄 (lingwang@wcysite.com)
+ * @brief Define utility error and expetation reporting functions.
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
+
 #pragma once
 
 #include <string>

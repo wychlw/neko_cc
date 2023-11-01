@@ -1,3 +1,11 @@
+/**
+ * @file out.cc
+ * @author 泠妄 (lingwang@wcysite.com)
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
+
 #include <iostream>
 #include <string>
 

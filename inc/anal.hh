@@ -240,11 +240,11 @@ void function_definition(stream &ss, context_t &ctx, var_t function,
 int constant_expression(stream &ss, context_t &ctx);
 
 void declaration_specifiers(stream &ss, context_t &ctx, type_t &type);
-UNFIN void init_declarator(stream &ss, context_t &ctx, type_t type);
+void init_declarator(stream &ss, context_t &ctx, type_t type);
 void strong_class_specfifer(stream &ss, context_t &ctx, type_t &type);
 void type_specifier(stream &ss, context_t &ctx, type_t &type);
 void struct_or_union_specifier(stream &ss, context_t &ctx, type_t &type);
-UNFIN void struct_declaration_list(stream &ss, context_t &ctx, type_t &type);
+void struct_declaration_list(stream &ss, context_t &ctx, type_t &type);
 
 void type_qualifier(stream &ss, context_t &ctx, type_t &type);
 std::vector<var_t> declarator(stream &ss, context_t &ctx,
@@ -261,7 +261,7 @@ std::vector<var_t> direct_abstract_declarator(stream &ss, context_t &ctx,
 					      std::shared_ptr<type_t> type,
 					      var_t &var);
 
-UNFIN std::vector<var_t> parameter_type_list(stream &ss, context_t &ctx);
+std::vector<var_t> parameter_type_list(stream &ss, context_t &ctx);
 
 std::vector<var_t> parameter_type_list(stream &ss, context_t &ctx);
 std::vector<var_t> parameter_list(stream &ss, context_t &ctx);
@@ -269,8 +269,9 @@ var_t parameter_declaration(stream &ss, context_t &ctx);
 
 UNFIN void initializer(stream &ss, context_t &ctx, var_t &var);
 
-UNFIN void enum_specifier(stream &ss, context_t &ctx, type_t &type);
-
+void enum_specifier(stream &ss, context_t &ctx, type_t &type);
+void enumerator_list(stream &ss, context_t &ctx);
+void enumerator(stream &ss, context_t &ctx, int &val);
 void struct_declaration_list(stream &ss, context_t &ctx, type_t &struct_type);
 void struct_declaration(stream &ss, context_t &ctx, type_t &struct_type);
 void specifier_qualifier_list(stream &ss, context_t &ctx, type_t &type);

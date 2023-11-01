@@ -1,3 +1,10 @@
+/**
+ * @file scan.cc
+ * @author 泠妄 (lingwang@wcysite.com)
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
 
 #include <cstddef>
 #include <cstdio>
@@ -159,6 +166,22 @@ static std::string get_trans_char(stream &ss)
 			error("Too big for a char", ss, true);
 		}
 		res += ch;
+	} else if (ss.peek() == 'x') {
+		match_ss('x', ss);
+		int ch = 0;
+		while (is_digit(ss.peek()) ||
+		       (ss.peek() >= 'a' && ss.peek() <= 'f') ||
+		       (ss.peek() >= 'F' && ss.peek() <= 'F')) {
+			ch *= 10;
+			ch += is_digit(ss.peek()) ? ss.get() - '0' :
+			      (ss.peek() >= 'a' && ss.peek() <= 'f') ?
+						    ss.get() - 'a' + 10 :
+						    ss.get() - 'A' + 10;
+		}
+		if (ch >= 256) {
+			error("Too big for a char", ss, true);
+		}
+		res += ch;
 	} else {
 		res += ss.get();
 	}
@@ -190,7 +213,7 @@ std::string get_string(stream &ss)
 		if (ss.peek() == '\\') {
 			res += ss.get();
 		}
-		res += ss.get();
+		res += get_trans_char(ss);
 	}
 	match_ss('"', ss);
 	return res;

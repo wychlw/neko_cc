@@ -409,7 +409,7 @@ void emit_match_type(var_t &v1, var_t &v2)
 	}
 
 	bool is_unsigned = conv_v1 ? v2.type->is_unsigned :
-					v1.type->is_unsigned;
+				     v1.type->is_unsigned;
 
 	if (conv_v1) {
 		v1 = emit_conv_to(v1, *v2.type);
@@ -485,22 +485,65 @@ void emit_post_const_decl(const var_t &var, const string &init_val)
 	post_decl += prt + '\n';
 }
 
-void emit_global_decl(const var_t &var)
+var_t emit_global_decl(const var_t &var)
 {
 	string prt = "";
 	prt += var.name + " = global ";
 	prt += get_type_repr(*var.type);
 	prt += " zeroinitializer";
 	emit_line(prt);
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = var.type;
+	var_t ret;
+	ret.name = var.name;
+	ret.type = std::make_shared<type_t>(ptr_type);
+	ret.is_alloced = 1;
+	return ret;
 }
 
-void emit_global_decl(const var_t &var, const string &init_val)
+var_t emit_global_decl(const var_t &var, const string &init_val)
 {
 	string prt = "";
 	prt += var.name + " = global ";
 	prt += get_type_repr(*var.type);
 	prt += " " + init_val;
 	emit_line(prt);
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = var.type;
+	var_t ret;
+	ret.name = var.name;
+	ret.type = std::make_shared<type_t>(ptr_type);
+	ret.is_alloced = 1;
+	return ret;
+}
+
+var_t emit_global_fun_decl(const var_t &var)
+{
+	string prt = "";
+	prt += "declare ";
+	prt += get_type_repr(*var.type->ret_type);
+	prt += ' ';
+	prt += var.name + "(";
+	for (const auto &i : var.type->args_type) {
+		prt += get_type_repr(i);
+		prt += ", ";
+	}
+	if (var.type->args_type.size()) {
+		prt.pop_back();
+		prt.pop_back();
+	}
+	prt += ")";
+	emit_line(prt);
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = var.type;
+	var_t ret;
+	ret.name = var.name;
+	ret.type = std::make_shared<type_t>(ptr_type);
+	ret.is_alloced = 1;
+	return ret;
 }
 
 var_t emit_add(const var_t &v1, const var_t &v2)

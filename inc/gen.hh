@@ -114,9 +114,11 @@ var_t emit_alloc(const type_t &type, const string &name);
 
 void emit_post_const_decl(const var_t &var, const string &init_val);
 
-void emit_global_decl(const var_t &var);
+var_t emit_global_decl(const var_t &var);
 
-void emit_global_decl(const var_t &var, const string &init_val);
+var_t emit_global_decl(const var_t &var, const string &init_val);
+
+var_t emit_global_fun_decl(const var_t &var);
 
 var_t emit_add(const var_t &v1, const var_t &v2);
 

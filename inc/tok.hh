@@ -1,3 +1,13 @@
+/**
+ * @file tok.hh
+ * @author 泠妄 (lingwang@wcysite.com)
+ * @brief Define language token
+ * @version 0.1
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
+
 #pragma once
 
 #include <unordered_map>
@@ -17,6 +27,7 @@ enum tok_enum {
 	tok_null,
 
 	// keywords
+	tok_keywords_begin,
 	tok_char,
 	tok_short,
 	tok_int,
@@ -54,7 +65,10 @@ enum tok_enum {
 	tok_typedef,
 	tok_sizeof,
 
+	tok_keywords_end,
+
 	// operators
+	tok_operators_begin,
 	tok_pointer,
 	tok_inc,
 	tok_dec,
@@ -76,6 +90,9 @@ enum tok_enum {
 	tok_and_assign,
 	tok_xor_assign,
 	tok_or_assign,
+	tok_va_arg,
+
+	tok_operators_end,
 
 	// properties
 
@@ -84,6 +101,13 @@ enum tok_enum {
 };
 
 extern std::unordered_map<std::string, int> tok_map;
+
+/**
+ * @brief Get the represented string of a given type
+ * 
+ * @param type Given type
+ * @return std::string Represented string
+ */
 std::string back_tok_map(int type);
 
 }
