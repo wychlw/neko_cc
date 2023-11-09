@@ -498,9 +498,15 @@ inline bool operator==(const type_t &lhs, const type_t &rhs)
 		return true;
 	}
 	if (lhs.type == type_t::type_pointer) {
+		if (lhs.name == "null" || rhs.name == "null") {
+			return true;
+		}
 		return *(lhs.ptr_to) == *(rhs.ptr_to);
 	}
 	if (lhs.type == type_t::type_array) {
+		if (lhs.name == "null" || rhs.name == "null") {
+			return true;
+		}
 		return *(lhs.ptr_to) == *(rhs.ptr_to);
 	}
 	return false;

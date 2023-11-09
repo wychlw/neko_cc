@@ -684,6 +684,7 @@ void struct_or_union_specifier(stream &ss, context_t &ctx, type_t &type)
 			match('{', ss);
 			struct_declaration_list(ss, ctx, type);
 			match('}', ss);
+
 			ctx.types[type.name] = type;
 		} else {
 			type_t prev_type = ctx.get_type(type.name);
@@ -1184,6 +1185,9 @@ void struct_declaration(stream &ss, context_t &ctx, type_t &struct_type)
 
 	type_t decl_type;
 	specifier_qualifier_list(ss, ctx, decl_type);
+	if (decl_type.type == type_t::type_basic) {
+		try_regulate_basic(ss, decl_type);
+	}
 	std::vector<var_t> inner = struct_declarator_list(ss, ctx, decl_type);
 	for (auto i : inner) {
 		struct_type.inner_vars.push_back(i);
@@ -1769,9 +1773,8 @@ var_t primary_expression(stream &ss, context_t &ctx)
 		var_t var;
 		var.type = make_shared<type_t>();
 		var.type->type = type_t::type_pointer;
-		var.type->name = "f64";
+		var.type->name = "null";
 		var.type->size = 8;
-		var.type->is_double = 1;
 		var.name = "null";
 		return var;
 	}
@@ -1847,8 +1850,6 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 			if (nxt_tok(ss).type != ')') {
 				args = argument_expression_list(ss, ctx);
 			}
-			info("AAAA");
-			info(tmp.str());
 			if (tmp.type->type != type_t::type_pointer ||
 			    tmp.type->ptr_to->type != type_t::type_func) {
 				error("Cannot call non-function type", ss,

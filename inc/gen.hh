@@ -1,5 +1,7 @@
 #pragma once
 
+#include "autoconf.h"
+
 #include "anal.hh"
 #include <cstddef>
 #include <string>
