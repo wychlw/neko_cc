@@ -9,6 +9,15 @@ config SELECT_CODE_GEN_FORMAT_LLVM
     bool "Gen LLVM IR"
 endchoice
 
+choice SELECT_PARSER
+    prompt "Select the parser to use"
+    default SELECT_PARSER_TOP_DOWN
+
+config SELECT_PARSER_TOP_DOWN
+    bool "Use top down parser."
+endchoice
+
+
 config OPEN_DEBUG
     bool "Open debug config for compile"
     default y

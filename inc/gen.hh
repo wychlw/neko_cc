@@ -1,7 +1,17 @@
+/**
+ * @file gen.hh
+ * @author 泠妄 (lingwang@wcysite.com)
+ * @brief Define basic codegen procedure.
+ * @version 0.1
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
+
 #pragma once
 
 #include "autoconf.h"
-#include "anal.hh"
+#include "parse.hh"
 #include <cstddef>
 #include <string>
 #include <ios>

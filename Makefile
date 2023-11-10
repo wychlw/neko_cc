@@ -23,7 +23,7 @@ help:
 
 .PHONY: menuconfig savedefconfig help
 
-include $(base_path)/include/config/auto.conf
+-include $(base_path)/include/config/auto.conf
 -include $(base_path)/include/config/auto.conf.cmd
 
 CFLAGS += -Wall -Wextra -pedantic
@@ -36,13 +36,17 @@ CFLAGS += -O2
 endif
 
 SRCS = main.cc
-SRCS += src/tok.cc src/scan.cc src/out.cc src/anal.cc
+SRCS += src/tok.cc src/scan.cc src/out.cc src/parse_base.cc
 
 ifdef CONFIG_SELECT_CODE_GEN_FORMAT_DUMMY
 SRCS += src/gen_dummy.cc
 endif
 ifdef CONFIG_SELECT_CODE_GEN_FORMAT_LLVM
 SRCS += src/gen_llvm.cc
+endif
+
+ifdef CONFIG_SELECT_PARSER_TOP_DOWN
+SRCS += src/parse_top_down.cc
 endif
 
 OBJS = $(SRCS:%.cc=$(build_path)/%.o)

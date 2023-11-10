@@ -2,7 +2,7 @@
 #include "tok.hh"
 #include <bits/stdc++.h>
 #include "scan.hh"
-#include "anal.hh"
+#include "parse.hh"
 #include "gen.hh"
 
 using namespace neko_cc;
