@@ -9,7 +9,7 @@ using namespace neko_cc;
 
 int main(int argc, char *argv[])
 {
-	log_level = neko_cc::INFO;
+	log_level = neko_cc::WARN;
 	if (argc <= 1) {
 		err_msg("File expected");
 	}
@@ -25,10 +25,11 @@ int main(int argc, char *argv[])
 
 	std::fstream out;
 	out.open("test/out.ll", std::ios::out);
-	init_emit_engine(out);
+	init_emit_engine(out, true);
 	translation_unit(f);
 	release_emit_engine();
 	f.close();
 	out.close();
+	std::cout << "Code PASS." << std::endl;
 	return 0;
 }

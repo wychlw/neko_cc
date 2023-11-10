@@ -25,17 +25,23 @@ void _error(std::string func, int line, std::string msg)
 void _error(std::string msg, stream &ss, bool output_near)
 {
 	std::string m = msg;
+
 	if (output_near) {
+		for (int i = 0; i < 5; i++) {
+			ss.unget();
+		}
 		m += "\n\t near: ";
-		int i;
-		for (i = 0; i < 10; i++) {
-			if (ss.peek() == EOF)
-				break;
+		int i = 0;
+		while (ss.peek() != EOF && ss.peek() != '\r' &&
+		       ss.peek() != '\n') {
+			i++;
 			m += ss.get();
 		}
 		for (; i >= 0; i--) {
 			ss.unget();
 		}
+		m+="\n\t           ^\n";
+		
 	}
 	throw std::runtime_error(m);
 }
@@ -53,6 +59,14 @@ void info(std::string msg)
 		return;
 	}
 	std::cout << "INFO: " << msg << std::endl;
+}
+
+void warn(std::string msg)
+{
+	if (log_level > WARN) {
+		return;
+	}
+	std::cout << "WARN: " << msg << std::endl;
 }
 
 void _anal_debug(std::string pos, std::string tok_name, std::string msg)

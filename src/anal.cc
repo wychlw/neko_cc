@@ -1850,8 +1850,9 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 			if (nxt_tok(ss).type != ')') {
 				args = argument_expression_list(ss, ctx);
 			}
-			if (tmp.type->type != type_t::type_pointer ||
-			    tmp.type->ptr_to->type != type_t::type_func) {
+			if (!(tmp.type->type == type_t::type_func ||
+			      (tmp.type->type == type_t::type_pointer &&
+			       tmp.type->ptr_to->type == type_t::type_func))) {
 				error("Cannot call non-function type", ss,
 				      true);
 			}

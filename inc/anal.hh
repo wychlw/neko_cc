@@ -103,6 +103,12 @@ struct type_t {
 		type.output_type(dynamic_cast<stream *>(&ss));
 		return ss;
 	}
+	std::string str() const
+	{
+		std::stringstream ss;
+		output_type(&ss);
+		return ss.str();
+	}
 
 	friend bool operator==(const type_t &lhs, const type_t &rhs);
 };

@@ -2,6 +2,7 @@
 Remove K&R C grammar
 Remove va_args and va_list support
 Remove switch statement support
+Remove initlizer list support
 */
 
 translation_unit
@@ -232,4 +233,4 @@ iteration_statement
 	}
 
 initializer
-	{assignment_expression} | '{' initializer_list '}'
+	{assignment_expression}

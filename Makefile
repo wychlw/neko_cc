@@ -56,4 +56,7 @@ $(build_path)/neko_cc: $(OBJS)
 	
 all: $(build_path)/neko_cc
 
+clean:
+	@rm -rf $(build_path)
+
 .PHONY: all
