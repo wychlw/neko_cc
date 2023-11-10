@@ -163,14 +163,18 @@ var_t get_item_from_arrptr(const var_t &rs, const var_t &arr_offset)
 var_t get_item_from_structptr(const var_t &rs, const int &offset)
 {
 	string rd = get_vreg();
-	string prt = rd + " = getelementptr " + get_type_repr(*rs.type) +
-		     ", i64 0, i64 " + std::to_string(offset);
-	emit_line(prt);
 
-	var_t ret;
 	type_t ptr_type;
 	ptr_type.type = type_t::type_pointer;
 	ptr_type.ptr_to = rs.type->ptr_to->inner_vars[offset].type;
+
+	string prt = rd + " = getelementptr " +
+		     get_type_repr(*rs.type->ptr_to) + ", ptr " + rs.name +
+		     ", i32 0, i32 " + std::to_string(offset);
+	emit_line(prt);
+
+	var_t ret;
+
 	ret.name = rd;
 	ret.is_alloced = true;
 	ret.type = std::make_shared<type_t>(ptr_type);
@@ -338,6 +342,10 @@ var_t emit_conv_to(const var_t &rs, const type_t &type)
 		err_msg("emit_conv_to: type is void");
 	}
 
+	if (type == *rs.type) {
+		return rs;
+	}
+
 	if (is_type_i(type) && is_type_i(*rs.type)) {
 		if (type.size < rs.type->size) {
 			return emit_trunc_to(rs, type);
@@ -409,7 +417,7 @@ void emit_match_type(var_t &v1, var_t &v2)
 	}
 
 	bool is_unsigned = conv_v1 ? v2.type->is_unsigned :
-					v1.type->is_unsigned;
+				     v1.type->is_unsigned;
 
 	if (conv_v1) {
 		v1 = emit_conv_to(v1, *v2.type);
@@ -485,22 +493,65 @@ void emit_post_const_decl(const var_t &var, const string &init_val)
 	post_decl += prt + '\n';
 }
 
-void emit_global_decl(const var_t &var)
+var_t emit_global_decl(const var_t &var)
 {
 	string prt = "";
 	prt += var.name + " = global ";
 	prt += get_type_repr(*var.type);
 	prt += " zeroinitializer";
 	emit_line(prt);
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = var.type;
+	var_t ret;
+	ret.name = var.name;
+	ret.type = std::make_shared<type_t>(ptr_type);
+	ret.is_alloced = 1;
+	return ret;
 }
 
-void emit_global_decl(const var_t &var, const string &init_val)
+var_t emit_global_decl(const var_t &var, const string &init_val)
 {
 	string prt = "";
 	prt += var.name + " = global ";
 	prt += get_type_repr(*var.type);
 	prt += " " + init_val;
 	emit_line(prt);
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = var.type;
+	var_t ret;
+	ret.name = var.name;
+	ret.type = std::make_shared<type_t>(ptr_type);
+	ret.is_alloced = 1;
+	return ret;
+}
+
+var_t emit_global_fun_decl(const var_t &var)
+{
+	string prt = "";
+	prt += "declare ";
+	prt += get_type_repr(*var.type->ret_type);
+	prt += ' ';
+	prt += var.name + "(";
+	for (const auto &i : var.type->args_type) {
+		prt += get_type_repr(i);
+		prt += ", ";
+	}
+	if (var.type->args_type.size()) {
+		prt.pop_back();
+		prt.pop_back();
+	}
+	prt += ")";
+	emit_line(prt);
+	type_t ptr_type;
+	ptr_type.type = type_t::type_pointer;
+	ptr_type.ptr_to = var.type;
+	var_t ret;
+	ret.name = var.name;
+	ret.type = std::make_shared<type_t>(ptr_type);
+	ret.is_alloced = 1;
+	return ret;
 }
 
 var_t emit_add(const var_t &v1, const var_t &v2)

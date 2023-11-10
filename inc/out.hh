@@ -1,3 +1,12 @@
+/**
+ * @file out.hh
+ * @author 泠妄 (lingwang@wcysite.com)
+ * @brief Define utility error and expetation reporting functions.
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
+
 #pragma once
 
 #include <string>
@@ -19,6 +28,7 @@ enum log_level_t
 {
     INFO,
     DEBUG,
+    WARN,
     ERROR
 };
 extern log_level_t log_level;
@@ -29,6 +39,8 @@ extern log_level_t log_level;
 void _error(std::string func, int line, std::string msg);
 void _error(std::string func, int line, std::string msg, stream &ss, bool output_near = false);
 void info(std::string msg);
+void warn(std::string msg);
+
 
 #define anal_debug() _anal_debug(__func__)
 #define anal_debug_tok(tok) _anal_debug(__func__, tok)

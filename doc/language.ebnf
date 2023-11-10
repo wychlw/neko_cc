@@ -2,6 +2,7 @@
 Remove K&R C grammar
 Remove va_args and va_list support
 Remove switch statement support
+Remove initlizer list support
 */
 
 translation_unit
@@ -91,6 +92,17 @@ specifier_qualifier_list
 
 struct_declarator_list
 	declarator {',' declarator}*
+
+enum_specifier
+	ENUM '{' enumerator_list '}'
+	| ENUM IDENTIFIER '{' enumerator_list '}'
+	| ENUM IDENTIFIER
+
+enumerator_list
+	enumerator {',' enumerator}*
+
+enumerator
+	IDENTIFIER {'=' constant_expression}
 
 compound_statement
 	'{' {declaration_list | statement_list}* '}'
@@ -219,3 +231,6 @@ iteration_statement
 	| DO statement WHILE '(' expression ')' ';'
 	| FOR '(' expression_statement expression_statement expression ')' statement
 	}
+
+initializer
+	{assignment_expression}

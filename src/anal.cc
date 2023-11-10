@@ -1,15 +1,10 @@
 
 #include <algorithm>
-#include <cerrno>
-#include <climits>
-#include <cstddef>
-#include <cwchar>
 #include <stack>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 #include "scan.hh"
@@ -290,14 +285,16 @@ void top_declaration(stream &ss, context_t &ctx, type_t type, var_t var)
 		error("Cannot declare void type variable", ss, true);
 	}
 	var.name = '@' + var.name;
-	ctx.vars[var.name] = var;
 
 	if (nxt_tok(ss).type == '=') {
 		match('=', ss);
 		initializer(ss, ctx, var);
+	} else if (var.type->type == type_t::type_func) {
+		var = emit_global_fun_decl(var);
 	} else {
-		emit_global_decl(var);
+		var = emit_global_decl(var);
 	}
+	ctx.vars[var.name] = var;
 
 	while (nxt_tok(ss).type == ',') {
 		match(',', ss);
@@ -353,14 +350,21 @@ void init_declarator(stream &ss, context_t &ctx, type_t type)
 
 	if (ctx.fun_env->is_func) {
 		var.name = '%' + var.name;
-		var = emit_alloc(*var.type, var.name);
+
 	} else {
 		var.name = '@' + var.name;
 	}
-	ctx.vars[var.name] = var;
+
 	if (nxt_tok(ss).type == '=') {
 		match('=', ss);
 		initializer(ss, ctx, var);
+	} else {
+		if (ctx.fun_env->is_func) {
+			var = emit_alloc(*var.type, var.name);
+		} else {
+			var = emit_global_decl(var);
+		}
+		ctx.vars[var.name] = var;
 	}
 }
 
@@ -680,6 +684,7 @@ void struct_or_union_specifier(stream &ss, context_t &ctx, type_t &type)
 			match('{', ss);
 			struct_declaration_list(ss, ctx, type);
 			match('}', ss);
+
 			ctx.types[type.name] = type;
 		} else {
 			type_t prev_type = ctx.get_type(type.name);
@@ -1056,13 +1061,76 @@ void initializer(stream &ss, context_t &ctx, var_t &var)
 {
 	anal_debug();
 
-	// if (nxt_tok(ss).type == '{') {
-	// 	match('{', ss);
-	// 	initializer_list(ss, ctx, var);
-	// 	match('}', ss);
-	// } else {
-	// 	assignment_expression(ss, ctx);
-	// }
+	if (nxt_tok(ss).type == '{') {
+		throw "not implemented";
+		// match('{', ss);
+		// initializer_list(ss, ctx, var);
+		// match('}', ss);
+	} else {
+		if (ctx.fun_env->is_func) {
+			var = emit_alloc(*var.type, var.name);
+			ctx.vars[var.name] = var;
+			var_t init_var = assignment_expression(ss, ctx);
+			emit_store(var, init_var);
+		} else {
+			if (nxt_tok(ss).type != tok_int_lit &&
+			    nxt_tok(ss).type != tok_float_lit &&
+			    nxt_tok(ss).type != tok_string_lit &&
+			    nxt_tok(ss).type != tok_ident) {
+				error("Initializer must be constant", ss, true);
+			}
+			if (nxt_tok(ss).type == tok_ident &&
+			    ctx.get_enum(nxt_tok(ss).str) == -1) {
+				error("Initializer must be constant", ss, true);
+			}
+			if (nxt_tok(ss).type == tok_int_lit ||
+			    nxt_tok(ss).type == tok_ident) {
+				int init_val;
+				if (is_type_i(*var.type)) {
+					init_val = std::stoi(get_tok(ss).str);
+				} else {
+					init_val =
+						ctx.get_enum(get_tok(ss).str);
+				}
+				if (is_type_i(*var.type)) {
+					var = emit_global_decl(
+						var, std::to_string(init_val));
+				} else if (is_type_f(*var.type)) {
+					var = emit_global_decl(
+						var, std::to_string(init_val) +
+							     ".0");
+				} else {
+					error("Initializer type mismatch", ss,
+					      true);
+				}
+			} else if (nxt_tok(ss).type == tok_float_lit) {
+				string init_val = get_tok(ss).str;
+				if (is_type_i(*var.type)) {
+					var = emit_global_decl(
+						var,
+						std::to_string((int)std::stof(
+							init_val)));
+				} else if (is_type_f(*var.type)) {
+					var = emit_global_decl(var, init_val);
+				} else {
+					error("Initializer type mismatch", ss,
+					      true);
+				}
+			} else if (nxt_tok(ss).type == tok_string_lit) {
+				std::string init_val = get_tok(ss).str;
+				if (is_type_i(*var.type)) {
+					error("Initializer type mismatch", ss,
+					      true);
+				} else if (is_type_f(*var.type)) {
+					error("Initializer type mismatch", ss,
+					      true);
+				} else {
+					var = emit_global_decl(var, init_val);
+				}
+			}
+			ctx.vars[var.name] = var;
+		}
+	}
 }
 
 /*
@@ -1117,6 +1185,9 @@ void struct_declaration(stream &ss, context_t &ctx, type_t &struct_type)
 
 	type_t decl_type;
 	specifier_qualifier_list(ss, ctx, decl_type);
+	if (decl_type.type == type_t::type_basic) {
+		try_regulate_basic(ss, decl_type);
+	}
 	std::vector<var_t> inner = struct_declarator_list(ss, ctx, decl_type);
 	for (auto i : inner) {
 		struct_type.inner_vars.push_back(i);
@@ -1174,6 +1245,12 @@ std::vector<var_t> struct_declarator_list(stream &ss, context_t &ctx,
 	return ret;
 }
 
+/*
+enum_specifier
+	ENUM '{' enumerator_list '}'
+	| ENUM IDENTIFIER '{' enumerator_list '}'
+	| ENUM IDENTIFIER
+*/
 void enum_specifier(stream &ss, context_t &ctx, type_t &type)
 {
 	anal_debug();
@@ -1182,6 +1259,84 @@ void enum_specifier(stream &ss, context_t &ctx, type_t &type)
 		error("enum expected", ss, true);
 	}
 	match(tok_enum, ss);
+	if (nxt_tok(ss).type == '{') {
+		match('{', ss);
+		enumerator_list(ss, ctx);
+		match('}', ss);
+	} else if (nxt_tok(ss).type == tok_ident) {
+		tok_t tok = get_tok(ss);
+		type.name = tok.str;
+		if (nxt_tok(ss).type == '{') {
+			match('{', ss);
+			enumerator_list(ss, ctx);
+			match('}', ss);
+			ctx.types[type.name] = type;
+		} else {
+			type_t prev_type = ctx.get_type(type.name);
+			if (prev_type.type == type_t::type_unknown) {
+				error("Unknown enum type", ss, true);
+			}
+			if (prev_type.type != type_t::type_enum &&
+			    !is_type_i(prev_type)) {
+				error("Duplicate type specifier", ss, true);
+			}
+			prev_type.is_extern = type.is_extern;
+			prev_type.is_static = type.is_static;
+			prev_type.is_register = type.is_register;
+			prev_type.is_const = type.is_const;
+			prev_type.is_volatile = type.is_volatile;
+			type = prev_type;
+		}
+	} else {
+		error("Identifier or '{' expected", ss, true);
+	}
+	type_t i32_type;
+	i32_type.name = "i32";
+	i32_type.type = type_t::type_basic;
+	i32_type.size = 4;
+	i32_type.is_int = 1;
+	i32_type.is_extern = type.is_extern;
+	i32_type.is_static = type.is_static;
+	i32_type.is_register = type.is_register;
+	i32_type.is_const = type.is_const;
+	i32_type.is_volatile = type.is_volatile;
+	type = i32_type;
+}
+
+/*
+enumerator_list
+	enumerator {',' enumerator}*
+*/
+void enumerator_list(stream &ss, context_t &ctx)
+{
+	anal_debug();
+
+	int val = 0;
+	enumerator(ss, ctx, val);
+	while (nxt_tok(ss).type == ',') {
+		match(',', ss);
+		enumerator(ss, ctx, val);
+	}
+}
+
+/*
+enumerator
+	IDENTIFIER {'=' constant_expression}
+*/
+void enumerator(stream &ss, context_t &ctx, int &val)
+{
+	anal_debug();
+
+	if (nxt_tok(ss).type != tok_ident) {
+		error("Identifier expected", ss, true);
+	}
+	tok_t tok = get_tok(ss);
+	if (nxt_tok(ss).type == '=') {
+		match('=', ss);
+		val = constant_expression(ss, ctx);
+	}
+	ctx.enums[tok.str] = val;
+	val++;
 }
 
 /*
@@ -1618,9 +1773,8 @@ var_t primary_expression(stream &ss, context_t &ctx)
 		var_t var;
 		var.type = make_shared<type_t>();
 		var.type->type = type_t::type_pointer;
-		var.type->name = "f64";
+		var.type->name = "null";
 		var.type->size = 8;
-		var.type->is_double = 1;
 		var.name = "null";
 		return var;
 	}
@@ -1696,8 +1850,9 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 			if (nxt_tok(ss).type != ')') {
 				args = argument_expression_list(ss, ctx);
 			}
-			if (tmp.type->type != type_t::type_pointer ||
-			    tmp.type->ptr_to->type != type_t::type_func) {
+			if (!(tmp.type->type == type_t::type_func ||
+			      (tmp.type->type == type_t::type_pointer &&
+			       tmp.type->ptr_to->type == type_t::type_func))) {
 				error("Cannot call non-function type", ss,
 				      true);
 			}

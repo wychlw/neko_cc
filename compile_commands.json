@@ -2,66 +2,115 @@
   {
     "arguments": [
       "/usr/bin/g++",
-      "-c",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
       "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
       "-o",
-      "build/t0",
+      "/home/lw/Project/compiler/build/main.o",
       "main.cc"
     ],
     "directory": "/home/lw/Project/compiler",
     "file": "/home/lw/Project/compiler/main.cc",
-    "output": "/home/lw/Project/compiler/build/t0"
+    "output": "/home/lw/Project/compiler/build/main.o"
   },
   {
     "arguments": [
       "/usr/bin/g++",
-      "-c",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
       "-Iinc",
-      "-o",
-      "build/t0",
-      "src/anal.cc"
-    ],
-    "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/anal.cc",
-    "output": "/home/lw/Project/compiler/build/t0"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
       "-c",
-      "-Iinc",
       "-o",
-      "build/t0",
-      "src/out.cc"
-    ],
-    "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/out.cc",
-    "output": "/home/lw/Project/compiler/build/t0"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-c",
-      "-Iinc",
-      "-o",
-      "build/t0",
-      "src/scan.cc"
-    ],
-    "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/scan.cc",
-    "output": "/home/lw/Project/compiler/build/t0"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-c",
-      "-Iinc",
-      "-o",
-      "build/t0",
+      "/home/lw/Project/compiler/build/src/tok.o",
       "src/tok.cc"
     ],
     "directory": "/home/lw/Project/compiler",
     "file": "/home/lw/Project/compiler/src/tok.cc",
-    "output": "/home/lw/Project/compiler/build/t0"
+    "output": "/home/lw/Project/compiler/build/src/tok.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/scan.o",
+      "src/scan.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/scan.cc",
+    "output": "/home/lw/Project/compiler/build/src/scan.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/out.o",
+      "src/out.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/out.cc",
+    "output": "/home/lw/Project/compiler/build/src/out.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/anal.o",
+      "src/anal.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/anal.cc",
+    "output": "/home/lw/Project/compiler/build/src/anal.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/gen_llvm.o",
+      "src/gen_llvm.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/gen_llvm.cc",
+    "output": "/home/lw/Project/compiler/build/src/gen_llvm.o"
   }
 ]

@@ -1,0 +1,14 @@
+
+choice SELECT_CODE_GEN_FORMAT
+    prompt "Select the format of the generated code"
+    default SELECT_CODE_GEN_FORMAT_DUMMY
+
+config SELECT_CODE_GEN_FORMAT_DUMMY
+    bool "Gen only loginfo to file"
+config SELECT_CODE_GEN_FORMAT_LLVM
+    bool "Gen LLVM IR"
+endchoice
+
+config OPEN_DEBUG
+    bool "Open debug config for compile"
+    default y

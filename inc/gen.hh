@@ -1,5 +1,6 @@
 #pragma once
 
+#include "autoconf.h"
 #include "anal.hh"
 #include <cstddef>
 #include <string>
@@ -12,7 +13,12 @@ using std::size_t;
 using std::string;
 using stream = std::basic_iostream<char>;
 
+#ifndef CONFIG_SELECT_CODE_GEN_FORMAT_DUMMY
 void init_emit_engine(stream &ss);
+#else
+void init_emit_engine(stream &ss, bool _need_log = true);
+#endif
+
 void release_emit_engine();
 
 void emit(const string &s);
@@ -114,9 +120,11 @@ var_t emit_alloc(const type_t &type, const string &name);
 
 void emit_post_const_decl(const var_t &var, const string &init_val);
 
-void emit_global_decl(const var_t &var);
+var_t emit_global_decl(const var_t &var);
 
-void emit_global_decl(const var_t &var, const string &init_val);
+var_t emit_global_decl(const var_t &var, const string &init_val);
+
+var_t emit_global_fun_decl(const var_t &var);
 
 var_t emit_add(const var_t &v1, const var_t &v2);
 

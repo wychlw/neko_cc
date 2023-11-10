@@ -4,14 +4,18 @@
 #include "scan.hh"
 #include "anal.hh"
 #include "gen.hh"
-#include <fstream>
 
 using namespace neko_cc;
 
-int main()
+int main(int argc, char *argv[])
 {
-	// std::fstream f;
-	// f.open("test/tok_test0.txt", std::ios::in);
+	log_level = neko_cc::WARN;
+	if (argc <= 1) {
+		err_msg("File expected");
+	}
+	std::string file_name = argv[1];
+	std::fstream f;
+	f.open(file_name, std::ios::in);
 	// tok_t tok = scan(f);
 	// while (tok.type != tok_eof) {
 	// 	std::cout << "(" << tok.type << ", " << back_tok_map(tok.type)
@@ -19,16 +23,13 @@ int main()
 	// 	tok = scan(f);
 	// }
 
-	log_level = ERROR;
-
-	std::fstream f;
-	f.open("test/tmp_test.c", std::ios::in);
 	std::fstream out;
 	out.open("test/out.ll", std::ios::out);
-	init_emit_engine(out);
+	init_emit_engine(out, true);
 	translation_unit(f);
 	release_emit_engine();
 	f.close();
 	out.close();
+	std::cout << "Code PASS." << std::endl;
 	return 0;
 }
