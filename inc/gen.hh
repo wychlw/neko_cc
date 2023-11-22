@@ -11,7 +11,7 @@
 #pragma once
 
 #include "autoconf.h"
-#include "parse.hh"
+#include "parse/parse_base.hh"
 #include <cstddef>
 #include <string>
 #include <ios>

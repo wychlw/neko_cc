@@ -1,5 +1,5 @@
 /**
- * @file parse_top_down.hh
+ * @file parse/parse_top_down.hh
  * @author 泠妄 (lingwang@wcysite.com)
  * @brief Define parse procedure for top-down parser.
  * @version 0.1
@@ -9,7 +9,7 @@
  */
 
 #pragma once
-#include "parse.hh"
+#include "parse/parse_base.hh"
 
 namespace neko_cc
 {

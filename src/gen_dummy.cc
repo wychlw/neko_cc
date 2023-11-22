@@ -13,7 +13,7 @@
 #include <string>
 
 #include "gen.hh"
-#include "parse.hh"
+#include "parse/parse_top_down.hh"
 #include "scan.hh"
 #include "out.hh"
 

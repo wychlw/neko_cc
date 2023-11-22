@@ -1,0 +1,116 @@
+# Basic structure:
+# Name:
+#   lex: # lex_groups
+#     - # one group
+#       - # can be either action or comp
+#
+
+translation_unit:
+  lex:
+    - [external_declaration]
+    - [translation_unit, external_declaration]
+
+external_declaration:
+  lex:
+    - [function_definition]
+    - [declaration]
+
+function_definition:
+  lex:
+    - [declaration_specifiers, declarator, compound_statement]
+
+primary_expression:
+  lex:
+    - [tok_ident] # maybe a var or a enum val
+    - [tok_int_lit]
+    - [ok_float_lit]
+    - [tok_string_lit]
+    - [tok_null]
+    - ["(", expression, ")"]
+
+postfix_expression:
+  lex:
+    - [primary_expression]
+    - [postfix_expression, "[", expression, "]"]
+    - [postfix_expression, "(", ")"]
+    - [postfix_expression, "(", argument_expression_list, ")"]
+    - [postfix_expression, ".", tok_ident]
+    - [postfix_expression, tok_pointer, tok_ident]
+    - [tok_inc]
+    - [tok_dec]
+
+argument_expression_list:
+  lex:
+    - [assignment_expression]
+    - [argument_expression_list, ",", assignment_expression]
+
+unary_expression:
+  lex:
+    - [postfix_expression]
+    - [tok_inc, unary_expression]
+    - [tok_dec, unary_expression]
+    - [unary_operator, cast_expression]
+    - [tok_sizeof, unary_expression]
+    - [tok_sizeof, "(", type_name, ")"]
+
+unary_operator:
+  lex:
+    - ["&"]
+    - ["*"]
+    - ["+"]
+    - ["-"]
+    - ["~"]
+    - ["!"]
+
+cast_expression:
+  lex:
+    - [unary_expression]
+    - ["(", type_name, ")", cast_expression]
+
+multiplicative_expression:
+  lex:
+    - [cast_expression]
+    - [multiplicative_expression, "*", cast_expression]
+    - [multiplicative_expression, "/", cast_expression]
+    - [multiplicative_expression, "%", cast_expression]
+
+additive_expression:
+  lex:
+    - [multiplicative_expression]
+    - [additive_expression, "+", multiplicative_expression]
+    - [additive_expression, "-", multiplicative_expression]
+
+shift_expression:
+  lex:
+    - [additive_expression]
+    - [shift_expression, tok_lshift, additive_expression]
+    - [shift_expression, tok_rshift, additive_expression]
+
+relational_expression:
+  lex:
+    - [shift_expression]
+    - [relational_expression, "<", shift_expression]
+    - [relational_expression, ">", shift_expression]
+    - [relational_expression, tok_le, shift_expression]
+    - [relational_expression, tok_ge, shift_expression]
+
+equality_expression:
+  lex:
+    - [relational_expression]
+    - [equality_expression, tok_eq, relational_expression]
+    - [equality_expression, tok_ne, relational_expression]
+
+and_expression:
+  lex:
+    - [equality_expression]
+    - [and_expression, "&", equality_expression]
+
+exclusive_or_expression:
+  lex:
+    - [and_expression]
+    - [exclusive_or_expression, "^", and_expression]
+
+inclusive_or_expression:
+  lex:
+    - [exclusive_or_expression]
+    - [inclusive_or_expression, "|", exclusive_or_expression]

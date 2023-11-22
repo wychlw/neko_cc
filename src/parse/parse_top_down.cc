@@ -19,7 +19,7 @@
 #include "scan.hh"
 #include "tok.hh"
 #include "out.hh"
-#include "parse_top_down.hh"
+#include "parse/parse_top_down.hh"
 #include "gen.hh"
 #include "util.hh"
 

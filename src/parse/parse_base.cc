@@ -8,7 +8,7 @@
 
 #include <deque>
 
-#include "parse.hh"
+#include "parse/parse_top_down.hh"
 #include "out.hh"
 
 namespace neko_cc
