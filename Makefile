@@ -23,11 +23,13 @@ help:
 
 .PHONY: menuconfig savedefconfig help
 
-include $(base_path)/include/config/auto.conf
+-include $(base_path)/include/config/auto.conf
 -include $(base_path)/include/config/auto.conf.cmd
 
 CFLAGS += -Wall -Wextra -pedantic
 CFLAGS += -Iinc -Iinclude/generated
+
+LDFLAGS += -lyaml-cpp
 
 ifeq '$(CONFIG_OPEN_DEBUG)' 'y'
 CFLAGS += -g -Og
@@ -36,7 +38,7 @@ CFLAGS += -O2
 endif
 
 SRCS = main.cc
-SRCS += src/tok.cc src/scan.cc src/out.cc src/anal.cc
+SRCS += src/tok.cc src/scan.cc src/out.cc src/parse/parse_base.cc src/util.cc
 
 ifdef CONFIG_SELECT_CODE_GEN_FORMAT_DUMMY
 SRCS += src/gen_dummy.cc
@@ -45,18 +47,31 @@ ifdef CONFIG_SELECT_CODE_GEN_FORMAT_LLVM
 SRCS += src/gen_llvm.cc
 endif
 
+ifdef CONFIG_SELECT_PARSER_TOP_DOWN
+SRCS += src/parse/parse_top_down.cc
+endif
+ifdef CONFIG_SELECT_PARSER_LL1_SHEET
+SRCS += src/parse/ll1_sheet/base.cc
+SRCS += src/parse/ll1_sheet/parse_lex.cc
+endif
+ifdef CONFIG_SELECT_PARSER_LR1
+SRCS += src/parse/lr1/base.cc
+SRCS += src/parse/lr1/gramma.cc
+SRCS += src/parse/lr1/reduce.cc
+endif
+
 OBJS = $(SRCS:%.cc=$(build_path)/%.o)
 
 $(build_path)/%.o: %.cc
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CFLAGS) -c $< -o $@
+	mkdir -p $(dir $@)
+	$(CXX) $(CFLAGS) -c $< -o $@
 
 $(build_path)/neko_cc: $(OBJS)
-	@$(CXX) $(CFLAGS) $^ -o $@
+	$(CXX) $(CFLAGS) $(LDFLAGS) $^ -o $@
 	
 all: $(build_path)/neko_cc
 
 clean:
-	@rm -rf $(build_path)
+	rm -rf $(build_path)
 
 .PHONY: all

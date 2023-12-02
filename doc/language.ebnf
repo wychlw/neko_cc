@@ -5,6 +5,11 @@ Remove switch statement support
 Remove initlizer list support
 */
 
+/*
+Notice!
+The struct and union type is not supported, yet.
+*/
+
 translation_unit
 	{external_declaration}+
 

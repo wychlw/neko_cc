@@ -1,7 +1,8 @@
 build
 .cache
 .vscode
-
 test
 
 *.tmp
+
+.config.old

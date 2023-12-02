@@ -97,6 +97,7 @@ enum tok_enum {
 	// properties
 
 	tok_eof,
+	tok_empty,
 	tok_enum_end
 };
 

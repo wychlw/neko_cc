@@ -1,3 +1,11 @@
+/**
+ * @file gen_dummy.cc
+ * @author 泠妄 (lingwang@wcysite.com)
+ * 
+ * @copyright Copyright (c) 2023 lingwang with MIT License.
+ * 
+ */
+
 #include <cstddef>
 #include <memory>
 #include <sstream>
@@ -5,7 +13,7 @@
 #include <string>
 
 #include "gen.hh"
-#include "anal.hh"
+#include "parse/parse_top_down.hh"
 #include "scan.hh"
 #include "out.hh"
 

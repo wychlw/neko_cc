@@ -87,12 +87,12 @@
       "-Og",
       "-c",
       "-o",
-      "/home/lw/Project/compiler/build/src/anal.o",
-      "src/anal.cc"
+      "/home/lw/Project/compiler/build/src/parse/parse_base.o",
+      "src/parse/parse_base.cc"
     ],
     "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/anal.cc",
-    "output": "/home/lw/Project/compiler/build/src/anal.o"
+    "file": "/home/lw/Project/compiler/src/parse/parse_base.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/parse_base.o"
   },
   {
     "arguments": [
@@ -106,11 +106,49 @@
       "-Og",
       "-c",
       "-o",
-      "/home/lw/Project/compiler/build/src/gen_llvm.o",
-      "src/gen_llvm.cc"
+      "/home/lw/Project/compiler/build/src/gen_dummy.o",
+      "src/gen_dummy.cc"
     ],
     "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/gen_llvm.cc",
-    "output": "/home/lw/Project/compiler/build/src/gen_llvm.o"
+    "file": "/home/lw/Project/compiler/src/gen_dummy.cc",
+    "output": "/home/lw/Project/compiler/build/src/gen_dummy.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/parse/ll1_sheet/base.o",
+      "src/parse/ll1_sheet/base.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/parse/ll1_sheet/base.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/ll1_sheet/base.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/parse/ll1_sheet/parse_lex.o",
+      "src/parse/ll1_sheet/parse_lex.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/parse/ll1_sheet/parse_lex.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/ll1_sheet/parse_lex.o"
   }
 ]

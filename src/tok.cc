@@ -78,6 +78,12 @@ std::string back_tok_map(int type)
 	if (type == tok_eof) {
 		return "EOF";
 	}
+	if (type == tok_null) {
+		return "NULL";
+	}
+	if (type == tok_empty) {
+		return "EMPTY";
+	}
 	if (type == tok_ident) {
 		return "ident";
 	}
