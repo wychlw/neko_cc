@@ -38,7 +38,7 @@ CFLAGS += -O2
 endif
 
 SRCS = main.cc
-SRCS += src/tok.cc src/scan.cc src/out.cc src/parse/parse_base.cc
+SRCS += src/tok.cc src/scan.cc src/out.cc src/parse/parse_base.cc src/util.cc
 
 ifdef CONFIG_SELECT_CODE_GEN_FORMAT_DUMMY
 SRCS += src/gen_dummy.cc
@@ -53,6 +53,11 @@ endif
 ifdef CONFIG_SELECT_PARSER_LL1_SHEET
 SRCS += src/parse/ll1_sheet/base.cc
 SRCS += src/parse/ll1_sheet/parse_lex.cc
+endif
+ifdef CONFIG_SELECT_PARSER_LR1
+SRCS += src/parse/lr1/base.cc
+SRCS += src/parse/lr1/gramma.cc
+SRCS += src/parse/lr1/reduce.cc
 endif
 
 OBJS = $(SRCS:%.cc=$(build_path)/%.o)

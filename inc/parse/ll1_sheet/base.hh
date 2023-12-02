@@ -65,7 +65,7 @@ struct lex_t {
 	 * @param group 
 	 * @param node 
 	 */
-	void fill_gramma(gramma_t &group, YAML::detail::iterator_value &node);
+	void fill_gramma(gramma_t &group, YAML::Node &node);
 
 	/**
 	 * @brief Get the replace name of a grammar

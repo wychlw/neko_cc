@@ -10,7 +10,6 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 
-#include "parse/ll1_sheet/parse_lex.hh"
 #include "out.hh"
 
 namespace neko_cc
@@ -39,17 +38,17 @@ string lex_t::get_name(size_t idx)
 	}
 }
 
-void lex_t::fill_gramma(gramma_t &group, YAML::detail::iterator_value &node)
+void lex_t::fill_gramma(gramma_t &group, YAML::Node &node)
 {
-	for (auto lex_group : node.second["lex"]) {
+	for (auto lex_group : node) {
 		deque<comp_t> g_group;
-		for (auto lex : lex_group) {
+		for (auto lex : lex_group["lex"]) {
 			string lex_name = lex.as<string>();
 			size_t lex_idx = get_hash(lex_name);
 			if (comp_gramma.find(lex_idx) == comp_gramma.end()) {
 				err_msg("Unknown gramma morpheme: " + lex_name);
 			}
-			g_group.push_back({ lex_idx, comp_t::GRAMMA });
+			g_group.push_back({lex_idx, comp_t::GRAMMA});
 		}
 		group.g.push_back(g_group);
 	}
@@ -88,7 +87,7 @@ void lex_t::parse_lex(YAML::Node &root)
 	for (auto gramma : root) {
 		size_t idx = get_hash(gramma.first.as<string>());
 		auto &g = comp_gramma[idx];
-		fill_gramma(g, gramma);
+		fill_gramma(g, gramma.second);
 	}
 }
 
@@ -442,7 +441,7 @@ void run_parse(stream &ss)
 			} else if (lex_now.first_set[pos.idx].count(
 					   nxt_tok(ss).type) == 0 &&
 				   lex_now.comp_gramma[pos.idx].accept_empty) {
-					// nothing to dos
+				// nothing to dos
 			} else {
 				parse_stack.push_back(
 					{ pos.idx,

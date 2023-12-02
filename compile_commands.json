@@ -11,11 +11,144 @@
       "-Og",
       "-c",
       "-o",
+      "/home/lw/Project/compiler/build/main.o",
+      "main.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/main.cc",
+    "output": "/home/lw/Project/compiler/build/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/tok.o",
+      "src/tok.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/tok.cc",
+    "output": "/home/lw/Project/compiler/build/src/tok.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/scan.o",
+      "src/scan.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/scan.cc",
+    "output": "/home/lw/Project/compiler/build/src/scan.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/out.o",
+      "src/out.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/out.cc",
+    "output": "/home/lw/Project/compiler/build/src/out.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
       "/home/lw/Project/compiler/build/src/parse/parse_base.o",
       "src/parse/parse_base.cc"
     ],
     "directory": "/home/lw/Project/compiler",
     "file": "/home/lw/Project/compiler/src/parse/parse_base.cc",
     "output": "/home/lw/Project/compiler/build/src/parse/parse_base.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/gen_dummy.o",
+      "src/gen_dummy.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/gen_dummy.cc",
+    "output": "/home/lw/Project/compiler/build/src/gen_dummy.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/parse/ll1_sheet/base.o",
+      "src/parse/ll1_sheet/base.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/parse/ll1_sheet/base.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/ll1_sheet/base.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/parse/ll1_sheet/parse_lex.o",
+      "src/parse/ll1_sheet/parse_lex.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/parse/ll1_sheet/parse_lex.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/ll1_sheet/parse_lex.o"
   }
 ]

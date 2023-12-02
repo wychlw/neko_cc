@@ -17,6 +17,8 @@ config SELECT_PARSER_TOP_DOWN
     bool "Use top down parser."
 config SELECT_PARSER_LL1_SHEET
     bool "Use LL1 sheet parser."
+config SELECT_PARSER_LR1
+    bool "Use LR1 parser."
 endchoice
 
 
