@@ -33,7 +33,7 @@ lex_t::lex_t(stream &ss, string start)
 	comp_gramma[start_idx] = {
 		"TRANS_UNIT",
 		start_idx,
-		{ { *get_sym_type("null_reduce_fn", reduce_fn),
+		{ { *get_sym_type("accept_reduce_fn", reduce_fn),
 		    { get_hash(start) } } }
 	};
 	get_terminal();
@@ -358,7 +358,7 @@ void lex_t::try_new_items_action_one(const size_t &item_set_idx,
 			continue;
 		}
 		action.type = action_t::type_t::shift;
-		action.idx = goto_idx;
+		action.action.idx = goto_idx;
 		action_table[item_set_idx][t] = action;
 	}
 	for (auto &nt : non_terminal) {
@@ -368,26 +368,18 @@ void lex_t::try_new_items_action_one(const size_t &item_set_idx,
 			continue;
 		}
 		action.type = action_t::type_t::go;
-		action.go = goto_idx;
+		action.action.go = goto_idx;
 		action_table[item_set_idx][nt] = action;
 	}
 	for (auto &item : item_set) {
 		if (item.pos != item.right.size()) {
 			continue;
 		}
-		if (item.left == start_idx) {
-			// special treatment for accept
-			// though I'm considering to treat accept as a
-			// special reduce?
-			action_t action;
-			action.type = action_t::type_t::accept;
-			action_table[item_set_idx][tok_idx_map[tok_eof]] =
-				action;
-			continue;
-		}
 		action_t action;
 		action.type = action_t::type_t::reduce;
-		action.reduce = item.reduce;
+		action.action.reduce.reduce_num = item.right.size();
+		action.action.reduce.reduce_to = item.left;
+		action.action.reduce.reduce = item.reduce;
 		action_table[item_set_idx][item.look_ahead] = action;
 	}
 }

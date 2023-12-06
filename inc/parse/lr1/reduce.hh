@@ -1,3 +1,5 @@
+#pragma once
+
 #include "util.hh"
 #include "parse/parse_base.hh"
 #include <deque>
@@ -12,8 +14,8 @@ using std::make_shared;
 
 struct env_t {
 	shared_ptr<context_t> ctx;
-	shared_ptr<tok_t> tok;
 	shared_ptr<var_t> var;
+	shared_ptr<any_unique> any;
 };
 
 typedef env_t reduce_fn(deque<env_t> &env);

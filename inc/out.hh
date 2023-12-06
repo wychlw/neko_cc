@@ -42,10 +42,8 @@ void info(std::string msg);
 void warn(std::string msg);
 
 
-#define anal_debug() _anal_debug(__func__)
-#define anal_debug_tok(tok) _anal_debug(__func__, tok)
-#define anal_debug_msg(msg) _anal_debug(__func__, "", msg)
-#define anal_debug_tok_msg(tok, msg) _anal_debug(__func__, tok, msg)
-void _anal_debug(std::string pos,std::string tok_name = "", std::string msg = "");
+#define debug() _debug(__func__)
+#define debug_msg(msg) _debug(__func__, "", msg)
+void _debug(std::string pos,std::string tok_name = "", std::string msg = "");
 
 }

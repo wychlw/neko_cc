@@ -58,6 +58,16 @@ ifdef CONFIG_SELECT_PARSER_LR1
 SRCS += src/parse/lr1/base.cc
 SRCS += src/parse/lr1/gramma.cc
 SRCS += src/parse/lr1/reduce.cc
+SRCS += src/parse/lr1/parse.cc
+endif
+
+ifdef CONFIG_SELECT_REDUCE_FN_SELFWRITE
+REDUCE_SRCS = $(shell find $(CONFIG_REDUCE_FN_PATH) -type f -regex '.*\.\(\(c\)\|\(cpp\)\|\(cc\)\|\(cxx\)\)')
+SRCS += $(SELF_REDUCE_SRCS)
+endif
+ifdef CONFIG_SELECT_REDUCE_FN_PREWRITE
+REDUCE_SRCS = $(shell find $(CONFIG_REDUCE_FN_PATH) -type f -regex '.*\.\(\(c\)\|\(cpp\)\|\(cc\)\|\(cxx\)\)')
+SRCS += $(REDUCE_SRCS)
 endif
 
 OBJS = $(SRCS:%.cc=$(build_path)/%.o)

@@ -21,6 +21,20 @@ config SELECT_PARSER_LR1
     bool "Use LR1 parser."
 endchoice
 
+choice SELECT_REDUCE_FN
+depends on SELECT_PARSER_LR1
+    prompt "Select the reduce function to use"
+    default SELECT_REDUCE_FN_PREWRITE
+config SELECT_REDUCE_FN_PREWRITE
+    bool "Use prewrite reduce function."
+config SELECT_REDUCE_FN_SELFWRITE
+    bool "Use self write reduce function."
+endchoice
+
+config REDUCE_FN_PATH
+depends on SELECT_REDUCE_FN_SELFWRITE
+    string "Reduce function path."
+    default "src/reduce_fn"
 
 config OPEN_DEBUG
     bool "Open debug config for compile"
