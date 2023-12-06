@@ -5,7 +5,9 @@ namespace neko_cc
 {
 env_t null_reduce_fn(deque<env_t> &unused(env))
 {
-	return env_t();
+	shared_ptr<context_t> empty_ctx = nullptr;
+	shared_ptr<var_t> empty_var = nullptr;
+	return env_t{ empty_ctx, empty_var, make_any() };
 }
 
 reg_sym(null_reduce_fn);

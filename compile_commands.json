@@ -106,6 +106,25 @@
       "-Og",
       "-c",
       "-o",
+      "/home/lw/Project/compiler/build/src/util.o",
+      "src/util.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/util.cc",
+    "output": "/home/lw/Project/compiler/build/src/util.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
       "/home/lw/Project/compiler/build/src/gen_dummy.o",
       "src/gen_dummy.cc"
     ],
@@ -125,12 +144,12 @@
       "-Og",
       "-c",
       "-o",
-      "/home/lw/Project/compiler/build/src/parse/ll1_sheet/base.o",
-      "src/parse/ll1_sheet/base.cc"
+      "/home/lw/Project/compiler/build/src/parse/lr1/base.o",
+      "src/parse/lr1/base.cc"
     ],
     "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/parse/ll1_sheet/base.cc",
-    "output": "/home/lw/Project/compiler/build/src/parse/ll1_sheet/base.o"
+    "file": "/home/lw/Project/compiler/src/parse/lr1/base.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/lr1/base.o"
   },
   {
     "arguments": [
@@ -144,11 +163,49 @@
       "-Og",
       "-c",
       "-o",
-      "/home/lw/Project/compiler/build/src/parse/ll1_sheet/parse_lex.o",
-      "src/parse/ll1_sheet/parse_lex.cc"
+      "/home/lw/Project/compiler/build/src/parse/lr1/gramma.o",
+      "src/parse/lr1/gramma.cc"
     ],
     "directory": "/home/lw/Project/compiler",
-    "file": "/home/lw/Project/compiler/src/parse/ll1_sheet/parse_lex.cc",
-    "output": "/home/lw/Project/compiler/build/src/parse/ll1_sheet/parse_lex.o"
+    "file": "/home/lw/Project/compiler/src/parse/lr1/gramma.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/lr1/gramma.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/parse/lr1/reduce.o",
+      "src/parse/lr1/reduce.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/parse/lr1/reduce.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/lr1/reduce.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Iinc",
+      "-Iinclude/generated",
+      "-g",
+      "-Og",
+      "-c",
+      "-o",
+      "/home/lw/Project/compiler/build/src/parse/lr1/parse.o",
+      "src/parse/lr1/parse.cc"
+    ],
+    "directory": "/home/lw/Project/compiler",
+    "file": "/home/lw/Project/compiler/src/parse/lr1/parse.cc",
+    "output": "/home/lw/Project/compiler/build/src/parse/lr1/parse.o"
   }
 ]

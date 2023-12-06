@@ -69,7 +69,7 @@ void warn(std::string msg)
 	std::cout << "WARN: " << msg << std::endl;
 }
 
-void _anal_debug(std::string pos, std::string tok_name, std::string msg)
+void _debug(std::string pos, std::string tok_name, std::string msg)
 {
 	if (log_level > DEBUG) {
 		return;

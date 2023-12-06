@@ -426,7 +426,7 @@ void run_parse(stream &ss)
 			parse_stack.pop_back();
 			continue;
 		}
-		anal_debug_msg("gram: " + gram.name +
+		debug_msg("gram: " + gram.name +
 			       ", group: " + std::to_string(now.group_idx) +
 			       ", pos: " + std::to_string(now.pos_idx) +
 			       ", token: " + nxt_tok(ss).str);

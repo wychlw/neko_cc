@@ -112,7 +112,6 @@ struct lex_t {
 	size_t I_start, I_empty;
 
     private:
-
 	bool try_insert_item(item_set_t &item_set);
 
     public:
@@ -127,14 +126,17 @@ struct lex_t {
 			shift,
 			reduce,
 			go,
-			accept,
 			error,
 		} type;
-		union {
-			size_t idx; // shift to
-			reduce_fn *reduce; // reduce fn
-			size_t go; // go to
-		};
+		union action_union_t {
+			size_t idx; // shift
+			struct reduce_action_t { //reduce
+				size_t reduce_num;
+				size_t reduce_to;
+				reduce_fn *reduce;
+			}reduce;
+			size_t go; // go
+		} action;
 	};
 
 	std::unordered_map<size_t, std::unordered_map<size_t, action_t> >
@@ -144,7 +146,7 @@ struct lex_t {
 
     private:
 	bool try_new_items_action();
-	void try_new_items_action_one(const size_t &item_set_idx, const item_set_t &item_set);
-
+	void try_new_items_action_one(const size_t &item_set_idx,
+				      const item_set_t &item_set);
 };
 }

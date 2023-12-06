@@ -35,7 +35,7 @@ translation_unit
 */
 void translation_unit(stream &ss)
 {
-	anal_debug();
+	debug();
 
 	context_t ctx(nullptr, {}, {});
 	fun_env_t global_fun_env;
@@ -65,7 +65,7 @@ declaration
 */
 void external_declaration(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	type_t type;
 	// declaration_specifiers
@@ -110,7 +110,7 @@ function-definition:
 void function_definition(stream &ss, context_t &ctx, var_t function,
 			 std::vector<var_t> args)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type != '{') {
 		error("Compound statement expected", ss, true);
@@ -174,7 +174,7 @@ constant_expression
 */
 int constant_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == tok_int_lit) {
 		tok_t tok = get_tok(ss);
@@ -199,7 +199,7 @@ declaration
 */
 void declaration(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	type_t type;
 	declaration_specifiers(ss, ctx, type);
@@ -226,7 +226,7 @@ top_declaration
 */
 void top_declaration(stream &ss, context_t &ctx, type_t type, var_t var)
 {
-	anal_debug();
+	debug();
 
 	if (is_type_void(type)) {
 		error("Cannot declare void type variable", ss, true);
@@ -257,7 +257,7 @@ declaration_specifiers
 */
 void declaration_specifiers(stream &ss, context_t &ctx, type_t &type)
 {
-	anal_debug();
+	debug();
 
 	while (is_strong_class_specifier(nxt_tok(ss)) ||
 	       is_type_specifier(nxt_tok(ss), ctx) ||
@@ -284,7 +284,7 @@ init_declarator
 */
 void init_declarator(stream &ss, context_t &ctx, type_t type)
 {
-	anal_debug();
+	debug();
 
 	var_t var;
 	std::vector<var_t> args =
@@ -316,7 +316,7 @@ storage_class_specifier
 */
 void strong_class_specfifer(stream &ss, context_t &unused(ctx), type_t &type)
 {
-	anal_debug();
+	debug();
 
 	if (!is_strong_class_specifier(nxt_tok(ss))) {
 		error("Strong class specifier expected", ss, true);
@@ -346,7 +346,7 @@ type_specifier
 */
 void type_specifier(stream &ss, context_t &ctx, type_t &type)
 {
-	anal_debug();
+	debug();
 
 	if (!is_type_specifier(nxt_tok(ss), ctx)) {
 		error("Type specifier expected", ss, true);
@@ -474,7 +474,7 @@ struct_or_union_specifier
 */
 void struct_or_union_specifier(stream &ss, context_t &ctx, type_t &type)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type != tok_struct && nxt_tok(ss).type != tok_union) {
 		error("struct or union expected", ss, true);
@@ -529,7 +529,7 @@ type_qualifier
 */
 void type_qualifier(stream &ss, context_t &unused(ctx), type_t &type)
 {
-	anal_debug();
+	debug();
 
 	if (!is_type_qualifier(nxt_tok(ss))) {
 		error("Type qualifier expected", ss, true);
@@ -552,7 +552,7 @@ ret for functiion decl arg list
 std::vector<var_t> declarator(stream &ss, context_t &ctx,
 			      std::shared_ptr<type_t> type, var_t &var)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == '*') {
 		type = pointer(ss, ctx, type);
@@ -573,7 +573,7 @@ ret for function decl arg list
 std::vector<var_t> direct_declarator(stream &ss, context_t &ctx,
 				     std::shared_ptr<type_t> type, var_t &var)
 {
-	anal_debug();
+	debug();
 
 	std::vector<var_t> args;
 	bool hit_ident = false;
@@ -662,7 +662,7 @@ pointer
 std::shared_ptr<type_t> pointer(stream &ss, context_t &ctx,
 				std::shared_ptr<type_t> type)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type != '*') {
 		error("'*' expected", ss, true);
@@ -694,7 +694,7 @@ ret for functiion decl arg list
 std::vector<var_t> abstract_declarator(stream &ss, context_t &ctx,
 				       std::shared_ptr<type_t> type, var_t &var)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == '*') {
 		type = pointer(ss, ctx, type);
@@ -740,7 +740,7 @@ std::vector<var_t> direct_abstract_declarator(stream &ss, context_t &ctx,
 					      std::shared_ptr<type_t> type,
 					      var_t &var)
 {
-	anal_debug();
+	debug();
 
 	std::vector<var_t> args;
 	bool hit_ident = false;
@@ -828,7 +828,7 @@ parameter_type_list
 */
 std::vector<var_t> parameter_type_list(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	return parameter_list(ss, ctx);
 }
@@ -839,7 +839,7 @@ parameter_list
 */
 std::vector<var_t> parameter_list(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	std::vector<var_t> args;
 	args.push_back(parameter_declaration(ss, ctx));
@@ -856,7 +856,7 @@ parameter_declaration
 */
 var_t parameter_declaration(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t var;
 	type_t type;
@@ -871,7 +871,7 @@ initializer
 */
 void initializer(stream &ss, context_t &ctx, var_t &var)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == '{') {
 		throw "not implemented";
@@ -951,7 +951,7 @@ struct_declaration_list
 */
 void struct_declaration_list(stream &ss, context_t &ctx, type_t &struct_type)
 {
-	anal_debug();
+	debug();
 
 	while (nxt_tok(ss).type != '}') {
 		struct_declaration(ss, ctx, struct_type);
@@ -978,7 +978,7 @@ struct_declaration
 */
 void struct_declaration(stream &ss, context_t &ctx, type_t &struct_type)
 {
-	anal_debug();
+	debug();
 
 	type_t decl_type;
 	specifier_qualifier_list(ss, ctx, decl_type);
@@ -998,7 +998,7 @@ specifier_qualifier_list
 */
 void specifier_qualifier_list(stream &ss, context_t &ctx, type_t &type)
 {
-	anal_debug();
+	debug();
 
 	while (is_specifier_qualifier_list(nxt_tok(ss), ctx)) {
 		if (is_type_specifier(nxt_tok(ss), ctx)) {
@@ -1016,7 +1016,7 @@ struct_declarator_list
 std::vector<var_t> struct_declarator_list(stream &ss, context_t &ctx,
 					  type_t &type)
 {
-	anal_debug();
+	debug();
 
 	std::vector<var_t> ret;
 	var_t tvar;
@@ -1046,7 +1046,7 @@ enum_specifier
 */
 void enum_specifier(stream &ss, context_t &ctx, type_t &type)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type != tok_enum) {
 		error("enum expected", ss, true);
@@ -1102,7 +1102,7 @@ enumerator_list
 */
 void enumerator_list(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	int val = 0;
 	enumerator(ss, ctx, val);
@@ -1118,7 +1118,7 @@ enumerator
 */
 void enumerator(stream &ss, context_t &ctx, int &val)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type != tok_ident) {
 		error("Identifier expected", ss, true);
@@ -1138,7 +1138,7 @@ compound_statement
 */
 void compound_statement(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	match('{', ss);
 	while (nxt_tok(ss).type != '}') {
@@ -1157,7 +1157,7 @@ declaration_list
 */
 void declaration_list(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	while (is_declaration_specifiers(nxt_tok(ss), ctx)) {
 		declaration(ss, ctx);
@@ -1170,7 +1170,7 @@ statement_list
 */
 void statement_list(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	while (!is_declaration_specifiers(nxt_tok(ss), ctx) &&
 	       nxt_tok(ss).type != '}') {
@@ -1189,7 +1189,7 @@ statement
 */
 void statement(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == '{') {
 		context_t nctx(&ctx);
@@ -1227,7 +1227,7 @@ unary_operator
 */
 var_t unary_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == tok_inc) {
 		match(tok_inc, ss);
@@ -1457,7 +1457,7 @@ bool is_cast_expression(stream &ss, context_t &ctx)
 }
 var_t cast_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (is_cast_expression(ss, ctx)) {
 		match('(', ss);
@@ -1483,7 +1483,7 @@ type_name
 */
 type_t type_name(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	type_t type;
 	specifier_qualifier_list(ss, ctx, type);
@@ -1504,7 +1504,7 @@ primary_expression
 */
 var_t primary_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == tok_ident) {
 		tok_t tok = get_tok(ss);
@@ -1801,7 +1801,7 @@ argument_expression_list
 */
 std::vector<var_t> argument_expression_list(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	std::vector<var_t> args;
 	args.push_back(assignment_expression(ss, ctx));
@@ -1818,7 +1818,7 @@ multiplicative_expression
 */
 var_t multiplicative_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = cast_expression(ss, ctx);
 	while (is_mul_op(nxt_tok(ss))) {
@@ -1910,7 +1910,7 @@ additive_expression
 */
 var_t additive_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = multiplicative_expression(ss, ctx);
 	while (is_add_op(nxt_tok(ss))) {
@@ -1973,7 +1973,7 @@ shift_expression
 */
 var_t shift_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = additive_expression(ss, ctx);
 	while (is_shift_op(nxt_tok(ss))) {
@@ -2030,7 +2030,7 @@ relational_expression
 */
 var_t relational_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = shift_expression(ss, ctx);
 	while (is_rel_op(nxt_tok(ss))) {
@@ -2104,7 +2104,7 @@ equality_expression
 */
 var_t equality_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = relational_expression(ss, ctx);
 	while (is_eq_op(nxt_tok(ss))) {
@@ -2166,7 +2166,7 @@ and_expression
 */
 var_t and_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = equality_expression(ss, ctx);
 	while (nxt_tok(ss).type == '&') {
@@ -2196,7 +2196,7 @@ exclusive_or_expression
 */
 var_t exclusive_or_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = and_expression(ss, ctx);
 	while (nxt_tok(ss).type == '^') {
@@ -2226,7 +2226,7 @@ inclusive_or_expression
 */
 var_t inclusive_or_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = exclusive_or_expression(ss, ctx);
 	while (nxt_tok(ss).type == '|') {
@@ -2256,7 +2256,7 @@ logical_and_expression
 */
 var_t logical_and_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = inclusive_or_expression(ss, ctx);
 	while (nxt_tok(ss).type == tok_land) {
@@ -2299,7 +2299,7 @@ logical_or_expression
 */
 var_t logical_or_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = logical_and_expression(ss, ctx);
 	while (nxt_tok(ss).type == tok_lor) {
@@ -2342,7 +2342,7 @@ conditional_expression
 */
 var_t conditional_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = logical_or_expression(ss, ctx);
 	if (nxt_tok(ss).type == '?') {
@@ -2411,7 +2411,7 @@ assignment_operator
 */
 void assignment_operator(stream &ss, var_t rd, var_t rs, tok_t op)
 {
-	anal_debug();
+	debug();
 
 	if (!rd.is_alloced) {
 		error("Cannot assign to lvalue", ss, true);
@@ -2532,7 +2532,7 @@ assignment_expression
 */
 var_t assignment_expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	// though if here has an assignment operator, we need to call the
 	// unary expression; but the r_value can only come directily from
@@ -2557,7 +2557,7 @@ expression
 */
 var_t expression(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	var_t rs = assignment_expression(ss, ctx);
 	while (nxt_tok(ss).type == ',') {
@@ -2573,7 +2573,7 @@ expression_statement
 */
 void expression_statement(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == ';') {
 		match(';', ss);
@@ -2592,7 +2592,7 @@ jump_statement
 */
 void jump_statement(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (!is_jump_statement(nxt_tok(ss))) {
 		error("Not a jump statement", ss, true);
@@ -2652,7 +2652,7 @@ selection_statement
 */
 void selection_statement(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	string label_true = get_label();
 	string label_false = get_label();
@@ -2699,7 +2699,7 @@ iteration_statement
 */
 void iteration_statement(stream &ss, context_t &ctx)
 {
-	anal_debug();
+	debug();
 
 	if (nxt_tok(ss).type == tok_while) {
 		match(tok_while, ss);
