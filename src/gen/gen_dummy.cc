@@ -13,7 +13,6 @@
 #include <string>
 
 #include "gen.hh"
-#include "parse/parse_top_down.hh"
 #include "scan.hh"
 #include "out.hh"
 
@@ -73,6 +72,16 @@ string get_vreg()
 {
 	info("get_vreg" + std::to_string(vreg));
 	return "%vr_" + std::to_string(vreg++);
+}
+
+string get_global_name(const string &name)
+{
+	return "@" + name;
+}
+
+string get_local_name(const string &name)
+{
+	return "%" + name;
 }
 
 string get_type_repr(const type_t &type)

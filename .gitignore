@@ -6,3 +6,5 @@ test
 *.tmp
 
 .config.old
+
+gen_x86_asm.cc

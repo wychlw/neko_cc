@@ -41,11 +41,14 @@ SRCS = main.cc
 SRCS += src/tok.cc src/scan.cc src/out.cc src/parse/parse_base.cc src/util.cc
 
 ifdef CONFIG_SELECT_CODE_GEN_FORMAT_DUMMY
-SRCS += src/gen_dummy.cc
+SRCS += src/gen/gen_dummy.cc
 endif
 ifdef CONFIG_SELECT_CODE_GEN_FORMAT_LLVM
-SRCS += src/gen_llvm.cc
+SRCS += src/gen/gen_llvm.cc
 endif
+# ifdef CONFIG_SELECT_CODE_GEN_FORMAT_X86_ASM
+# SRCS += src/gen/gen_x86_asm.cc
+# endif
 
 ifdef CONFIG_SELECT_PARSER_TOP_DOWN
 SRCS += src/parse/parse_top_down.cc

@@ -118,7 +118,7 @@ void function_definition(stream &ss, context_t &ctx, var_t function,
 
 	reset_vreg();
 
-	function.name = '@' + function.name;
+	function.name = get_global_name(function.name);
 	var_t func_var;
 	type_t func_var_type;
 	func_var.name = function.name;
@@ -136,7 +136,7 @@ void function_definition(stream &ss, context_t &ctx, var_t function,
 		arg_var.name = get_vreg();
 		arg_var.type = i.type;
 
-		i.name = '%' + i.name;
+		i.name = get_local_name(i.name);
 
 		input_args.push_back(arg_var);
 	}

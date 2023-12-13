@@ -38,6 +38,10 @@ void reset_vreg();
 void inc_vreg();
 string get_vreg();
 
+string get_global_name(const string &name);
+
+string get_local_name(const string &name);
+
 string get_type_repr(const type_t &type);
 
 /**

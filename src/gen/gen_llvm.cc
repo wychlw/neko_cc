@@ -61,6 +61,16 @@ string get_vreg()
 	return "%vr_" + std::to_string(vreg++);
 }
 
+string get_global_name(const string &name)
+{
+	return "@" + name;
+}
+
+string get_local_name(const string &name)
+{
+	return "%" + name;
+}
+
 string get_type_repr(const type_t &type)
 {
 	if (type.type == type_t::type_unknown ||

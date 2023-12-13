@@ -7,6 +7,8 @@ config SELECT_CODE_GEN_FORMAT_DUMMY
     bool "Gen only loginfo to file"
 config SELECT_CODE_GEN_FORMAT_LLVM
     bool "Gen LLVM IR"
+# config SELECT_CODE_GEN_FORMAT_X86_ASM
+#     bool "Gen x86 asm"
 endchoice
 
 choice SELECT_PARSER
