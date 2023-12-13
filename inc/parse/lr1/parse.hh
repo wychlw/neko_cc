@@ -22,6 +22,12 @@ void init_parse_env(const lex_t &lex, parser_hook *hook);
 
 void run_parse(stream &ss);
 
+/**
+ * @brief An special reduce function that set the parser to accept state
+ * 
+ * @param env 
+ * @return env_t 
+ */
 env_t accept_reduce_fn(deque<env_t> &env);
 
 }

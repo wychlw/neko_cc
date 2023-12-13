@@ -72,19 +72,64 @@ struct lex_t {
 	 */
 	void parse_lex(YAML::Node &root);
 
+	/**
+	 * @brief Get all used terminals
+	 * 
+	 */
 	void get_terminal();
 
+	/**
+	 * @brief Get all used non-terminals
+	 * 
+	 */
 	void get_non_terminal();
 
+	/**
+	 * @brief Get first set of all terminals and non-terminals
+	 * 
+	 */
 	void get_first();
 
+	/**
+	 * @brief Get follow set of all non-terminals
+	 * 
+	 */
 	void get_follow();
 
     private:
+	/**
+	 * @brief Process one step of getting first set closure
+	 * 
+	 * @return true the first set has changed
+	 * @return false the first set has not changed
+	 */
 	bool get_first_change();
+
+	/**
+	 * @brief Process one step of getting first set closure of a given grammar
+	 * 
+	 * @param gram_idx  the index of the grammar
+	 * @param g  the right part of the grammar
+	 * @return true the first set of the grammar has changed
+	 * @return false the first set of the grammar has not changed
+	 */
 	bool get_first_gram(const size_t &gram_idx, const deque<size_t> &g);
 
+	/**
+	 * @brief Process one step of getting follow set closure
+	 * 
+	 * @return true the follow set has changed
+	 * @return false the follow set has not changed
+	 */
 	bool get_follow_change();
+	/**
+	 * @brief Process one step of getting follow set closure of a given grammar
+	 * 
+	 * @param gram_idx the index of the grammar
+	 * @param g the right part of the grammar
+	 * @return true the follow set of the grammar has changed
+	 * @return false the follow set of the grammar has not changed
+	 */
 	bool get_follow_gram(const size_t &gram_idx, const deque<size_t> &g);
 
     public:
@@ -105,19 +150,51 @@ struct lex_t {
 
 	using I_type = std::unordered_map<size_t, item_set_t>;
 
+	/**
+	 * @brief Get the closure of a given item
+	 * 
+	 * @param item An item in LR parser algorithm
+	 * @return size_t The index of the item set
+	 */
 	size_t closure(const item_t &item);
+	/**
+	 * @brief Get the closure of a given item set (By may expanding the item set)
+	 * 
+	 * @param item_set An item set in LR parser algorithm
+	 * @return size_t The index of the item set
+	 */
 	size_t closure(const item_set_t &item_set);
 
 	I_type I_map;
 	size_t I_start, I_empty;
 
     private:
+	/**
+	 * @brief Try to insert an item into an item set
+	 * 
+	 * @param item_set An item set in LR parser algorithm
+	 * @return true The item set has changed
+	 * @return false The item set has not changed
+	 */
 	bool try_insert_item(item_set_t &item_set);
 
     public:
+	/**
+	 * @brief Get the action of a given item set if the parser meets a given token
+	 * 
+	 * @param item_set_idx The index of the item set
+	 * @param gram_idx The index of the grammar
+	 * @return size_t The index of the item set
+	 */
 	size_t GOTO(const size_t &item_set_idx, const size_t &gram_idx);
 
     public:
+	/**
+	 * @brief Output the item set
+	 * 
+	 * @param item_set_idx The index of the item set
+	 * @return string 
+	 */
 	string print_closure(const size_t &item_set_idx);
 
     public:
@@ -142,10 +219,26 @@ struct lex_t {
 	std::unordered_map<size_t, std::unordered_map<size_t, action_t> >
 		action_table;
 
+	/**
+	 * @brief Get the action table and goto table of the given grammar
+	 * 
+	 */
 	void get_items_and_action();
 
     private:
+	/**
+	 * @brief Try to insert an action into the table.
+	 * 
+	 * @return true The table has changed
+	 * @return false The table has not changed
+	 */
 	bool try_new_items_action();
+	/**
+	 * @brief Try to insert an action into the table of a given item set.
+	 * 
+	 * @param item_set_idx The index of the item set
+	 * @param item_set The item set
+	 */
 	void try_new_items_action_one(const size_t &item_set_idx,
 				      const item_set_t &item_set);
 };

@@ -1871,7 +1871,7 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			} else if (is_type_f(*rs.type)) {
 				rs = emit_fdiv(rs, rt);
 			} else {
-				error("Cannot multiply this type", ss, true);
+				error("Cannot divide this type", ss, true);
 			}
 		} else if (nxt_tok(ss).type == '%') {
 			match('/', ss);
@@ -1883,10 +1883,10 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 				rt = emit_load(rt);
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
-				error("Cannot divide non-basic type", ss, true);
+				error("Cannot mod non-basic type", ss, true);
 			}
 			if (!is_type_i(*rt.type) && !is_type_f(*rt.type)) {
-				error("Cannot divide non-basic type", ss, true);
+				error("Cannot mod non-basic type", ss, true);
 			}
 			emit_match_type(rs, rt);
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
@@ -1897,7 +1897,7 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			} else if (is_type_f(*rs.type)) {
 				rs = emit_frem(rs, rt);
 			} else {
-				error("Cannot multiply this type", ss, true);
+				error("Cannot mod this type", ss, true);
 			}
 		}
 	}

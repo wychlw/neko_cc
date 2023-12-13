@@ -63,10 +63,12 @@ endif
 
 ifdef CONFIG_SELECT_REDUCE_FN_SELFWRITE
 REDUCE_SRCS = $(shell find $(CONFIG_REDUCE_FN_PATH) -type f -regex '.*\.\(\(c\)\|\(cpp\)\|\(cc\)\|\(cxx\)\)')
+RR = $(shell echo 123123 $(REDUCE_SRCS))
 SRCS += $(SELF_REDUCE_SRCS)
 endif
 ifdef CONFIG_SELECT_REDUCE_FN_PREWRITE
-REDUCE_SRCS = $(shell find $(CONFIG_REDUCE_FN_PATH) -type f -regex '.*\.\(\(c\)\|\(cpp\)\|\(cc\)\|\(cxx\)\)')
+REDUCE_SRCS = $(shell find src/reduce_fn -type f -regex '.*\.\(\(c\)\|\(cpp\)\|\(cc\)\|\(cxx\)\)')
+RR = $(shell echo 456456 $(REDUCE_SRCS))
 SRCS += $(REDUCE_SRCS)
 endif
 

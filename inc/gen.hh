@@ -124,58 +124,241 @@ var_t emit_conv_to(const var_t &rs, const type_t &type);
  */
 void emit_match_type(var_t &v1, var_t &v2);
 
+/**
+ * @brief Emit a alloca instruction, reutrn a rvalue.
+ * 
+ * @param type The type need to alloc
+ * @return var_t The alloca result, the name is gen randomly.
+ */
 var_t emit_alloc(const type_t &type);
 
+/**
+ * @brief Emit a alloca instruction, and set the name to a given name, reutrn a rvalue.
+ * 
+ * @param type The type need to alloc
+ * @param name The name of the alloca result
+ * @return var_t The alloca result
+ */
 var_t emit_alloc(const type_t &type, const string &name);
 
+/**
+ * @brief Emit a declare of a global const variable.
+ * 
+ * @param var The variable need to declare
+ * @param init_val The initial value of the variable
+ */
 void emit_post_const_decl(const var_t &var, const string &init_val);
 
+/**
+ * @brief Emit a declare of a global variable, reutrn a rvalue.
+ * 
+ * @param var The variable need to declare
+ * @return var_t The variable
+ */
 var_t emit_global_decl(const var_t &var);
 
+/**
+ * @brief Emit a declare of a global variable, and set the initial value, reutrn a rvalue.
+ * 
+ * @param var The variable need to declare
+ * @param init_val The initial value of the variable
+ * @return var_t The variable
+ */
 var_t emit_global_decl(const var_t &var, const string &init_val);
 
+/**
+ * @brief Emit a declare of a global function.
+ * 
+ * @param var The variable need to declare
+ * @return var_t The variable
+ */
 var_t emit_global_fun_decl(const var_t &var);
 
+/**
+ * @brief Emit an add instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_add(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a sub instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_sub(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a add instruction of the float.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_fadd(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a sub instruction of the float.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_fsub(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a mul instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_mul(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a mul instruction of the float.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_fmul(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a div instruction of a unsigned.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_udiv(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a div instruction of a signed.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_sdiv(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a div instruction of the float.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_fdiv(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a rem instruction of a unsigned.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_urem(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a rem instruction of a signed.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_srem(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a rem instruction of the float.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_frem(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a left shift instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_shl(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a right shift instruction of a unsigned.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_lshr(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a right shift instruction of a signed.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_ashr(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a and instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_and(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a or instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_or(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a xor instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t 
+ */
 var_t emit_xor(const var_t &v1, const var_t &v2);
 
+/**
+ * @brief Emit a load instruction.
+ * 
+ * @param rs The rvalue to load
+ * @return var_t The result
+ */
 var_t emit_load(const var_t &rs);
 
+/**
+ * @brief Emit a store instruction, store the value of rs to rd.
+ * 
+ * @param rd The value to be stored
+ * @param rs The place to store, must be a rvalue
+ */
 void emit_store(const var_t &rd, const var_t &rs);
 
+/**
+ * @brief Emit equal instruction.
+ * 
+ * @param v1 Operand 1
+ * @param v2 Operand 2
+ * @return var_t The result
+ */
 var_t emit_eq(const var_t &v1, const var_t &v2);
 
 var_t emit_ne(const var_t &v1, const var_t &v2);

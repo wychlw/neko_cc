@@ -6,6 +6,7 @@
 #include "tok.hh"
 #include "util.hh"
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -43,6 +44,24 @@ void run_parse(stream &ss)
 	deque<env_t> env;
 	state.push_back(lex_now.I_start);
 	shared_ptr<context_t> empty_ctx = nullptr;
+	{
+		type_t i32;
+		i32.type = type_t::type_basic;
+		i32.name = "i32";
+		i32.size = 4;
+		i32.is_int = 1;
+		type_t i32_ptr;
+		i32_ptr.type = type_t::type_pointer;
+		i32_ptr.name = "i32_ptr";
+		i32_ptr.size = 8;
+		i32_ptr.ptr_to = make_shared<type_t>(i32);
+		var_t init_var;
+		init_var.type = make_shared<type_t>(i32_ptr);
+		init_var.name = "@a";
+		init_var.is_alloced = true;
+		empty_ctx = make_shared<context_t>();
+		empty_ctx->vars["@a"] = init_var;
+	}
 	shared_ptr<var_t> empty_var = nullptr;
 	env.push_back({ empty_ctx, empty_var, make_any() });
 	size_t look;
@@ -69,15 +88,20 @@ void run_parse(stream &ss)
 		}
 		auto action = lex_now.action_table[state.back()][look];
 		if (action.type == lex_t::action_t::type_t::shift) {
-			get_tok(ss);
-			env_t tmp{ env.back().ctx, empty_var, make_any() };
+			tok = get_tok(ss);
+			auto tok_arg = make_any(tok);
+			env_t tmp{ env.back().ctx, empty_var, tok_arg };
 			state.push_back(action.action.idx);
 			env.push_back(tmp);
 		} else if (action.type == lex_t::action_t::type_t::reduce) {
 			auto reduce = action.action.reduce.reduce;
 			auto num = action.action.reduce.reduce_num;
 			auto to = action.action.reduce.reduce_to;
-			env_t tmp_env = reduce(env);
+			deque<env_t> env_arg;
+			for (size_t i = 0; i < num; i++) {
+				env_arg.push_front(env[env.size() - 1 - i]);
+			}
+			env_t tmp_env = reduce(env_arg);
 			for (size_t i = 0; i < num; i++) {
 				state.pop_back();
 				env.pop_back();

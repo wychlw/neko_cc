@@ -36,8 +36,8 @@ extern log_level_t log_level;
 #define error(msg, ss, on) _error(__func__, __LINE__, msg, ss, on)
 #define err_msg(msg) _error(__func__, __LINE__, msg)
 
-void _error(std::string func, int line, std::string msg);
-void _error(std::string func, int line, std::string msg, stream &ss, bool output_near = false);
+void _error(std::string func, int line, std::string msg) __attribute__ ((__noreturn__));
+void _error(std::string func, int line, std::string msg, stream &ss, bool output_near = false) __attribute__ ((__noreturn__));
 void info(std::string msg);
 void warn(std::string msg);
 
