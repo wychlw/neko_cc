@@ -8,6 +8,7 @@ Remove initlizer list support
 /*
 Notice!
 The struct and union type is not supported, yet.
+Well... struct is partially supported.
 */
 
 translation_unit

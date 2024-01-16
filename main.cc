@@ -135,7 +135,6 @@ int main(int argc, char *argv[])
 	cout << "\nParse" << endl;
 
 	std::fstream gen("test/out.ll", std::ios::out);
-	init_emit_engine(gen);
 
 	init_parse_env(res, &parser_hook_print);
 	translation_unit(f);
