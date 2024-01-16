@@ -8,6 +8,7 @@
 #include "parse/parse_base.hh"
 #include "gen.hh"
 #include <cstddef>
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -86,7 +87,6 @@ int main(int argc, char *argv[])
 	}
 	cout << endl;
 
-	res.get_items_and_action();
 	cout << "\nItems" << endl;
 	for (auto &[idx, item] : res.I_map) {
 		cout << "------------------------------" << endl;
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 		std::cout << "I " << idx << "\t";
 		for (auto &t : all) {
 			if (!res.action_table[idx].count(t)) {
-				std::cout << " \t";
+				std::cout << "E\t";
 				continue;
 			}
 			auto &action = res.action_table[idx][t];
@@ -133,6 +133,8 @@ int main(int argc, char *argv[])
 	}
 
 	cout << "\nParse" << endl;
+
+	std::fstream gen("test/out.ll", std::ios::out);
 
 	init_parse_env(res, &parser_hook_print);
 	translation_unit(f);

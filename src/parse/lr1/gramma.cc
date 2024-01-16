@@ -23,6 +23,7 @@ lex_t::lex_t(stream &ss)
 	get_non_terminal();
 	get_first();
 	get_follow();
+	get_items_and_action();
 }
 
 lex_t::lex_t(stream &ss, string start)
@@ -40,6 +41,7 @@ lex_t::lex_t(stream &ss, string start)
 	get_non_terminal();
 	get_first();
 	get_follow();
+	get_items_and_action();
 }
 
 string lex_t::get_name(size_t idx)

@@ -1,0 +1,33 @@
+S:
+  - lex: [E]
+    reduce: assignment_expression_direct
+  - lex: [E, "=", E]
+    reduce: assignment_expression_assign
+
+E:
+  - lex: [T]
+    reduce: additive_expression_direct
+  - lex: [E, "+", T]
+    reduce: additive_expression_add
+  - lex: [E, "-", T]
+    reduce: additive_expression_sub
+
+T:
+  - lex: [F]
+    reduce: postfix_expression_direct
+  - lex: [T, "*", F]
+    reduce: multiplicative_expression_mul
+  - lex: [T, "/", F]
+    reduce: multiplicative_expression_div
+  - lex: [T, "%", F]
+    reduce: multiplicative_expression_mod
+
+F:
+  - lex: [tok_ident]
+    reduce: primary_expression_ident
+  - lex: [tok_int_lit]
+    reduce: primary_expression_int_lit
+  - lex: [tok_float_lit]
+    reduce: primary_expression_float_lit
+  - lex: ["(", E, ")"]
+    reduce: primary_expression_expr

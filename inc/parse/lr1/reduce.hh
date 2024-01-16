@@ -20,6 +20,12 @@ struct env_t {
 
 typedef env_t reduce_fn(deque<env_t> &env);
 
+/**
+ * @brief An special reduce function that do nothing
+ * 
+ * @param env 
+ * @return env_t 
+ */
 env_t null_reduce_fn(deque<env_t> &env);
 
 }

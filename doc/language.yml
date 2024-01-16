@@ -1,116 +1,212 @@
-# Basic structure:
-# Name:
-#   lex: # lex_groups
-#     - # one group
-#       - # can be either action or comp
-#
-
-translation_unit:
-  lex:
-    - [external_declaration]
-    - [translation_unit, external_declaration]
-
-external_declaration:
-  lex:
-    - [function_definition]
-    - [declaration]
-
-function_definition:
-  lex:
-    - [declaration_specifiers, declarator, compound_statement]
-
 primary_expression:
-  lex:
-    - [tok_ident] # maybe a var or a enum val
-    - [tok_int_lit]
-    - [ok_float_lit]
-    - [tok_string_lit]
-    - [tok_null]
-    - ["(", expression, ")"]
+  - lex: [tok_ident] # maybe a var or a enum val
+    reduce: primary_expression_ident
+  - lex: [tok_int_lit]
+    reduce: primary_expression_int_lit
+  - lex: [tok_float_lit]
+    reduce: primary_expression_float_lit
+  - lex: [tok_string_lit]
+    reduce: primary_expression_string_lit
+  - lex: [tok_null]
+    reduce: primary_expression_null
+  - lex: ["(", expression, ")"]
+    reduce: primary_expression_expr
 
 postfix_expression:
-  lex:
-    - [primary_expression]
-    - [postfix_expression, "[", expression, "]"]
-    - [postfix_expression, "(", ")"]
-    - [postfix_expression, "(", argument_expression_list, ")"]
-    - [postfix_expression, ".", tok_ident]
-    - [postfix_expression, tok_pointer, tok_ident]
-    - [tok_inc]
-    - [tok_dec]
-
-argument_expression_list:
-  lex:
-    - [assignment_expression]
-    - [argument_expression_list, ",", assignment_expression]
+  - lex: [primary_expression]
+    reduce: postfix_expression_direct
+  - lex: [postfix_expression, "[", expression, "]"]
+    reduce: postfix_expression_arr
+  - lex: [postfix_expression, "(", ")"]
+    reduce: postfix_expression_call
+  - lex: [postfix_expression, "(", argument_expression_list, ")"]
+    reduce: postfix_expression_call_args
+  # - lex: [postfix_expression, ".", tok_ident]
+  #   reduce: null
+  # - lex: [postfix_expression, tok_pointer, tok_ident]
+  #   reduce: null
+  - lex: [postfix_expression, tok_inc]
+    reduce: postfix_expression_inc
+  - lex: [postfix_expression, tok_dec]
+    reduce: postfix_expression_dec
 
 unary_expression:
-  lex:
-    - [postfix_expression]
-    - [tok_inc, unary_expression]
-    - [tok_dec, unary_expression]
-    - [unary_operator, cast_expression]
-    - [tok_sizeof, unary_expression]
-    - [tok_sizeof, "(", type_name, ")"]
+  - lex: [postfix_expression]
+    reduce: unary_expression_direct
+  - lex: [tok_inc, unary_expression]
+    reduce: unary_expression_inc
+  - lex: [tok_dec, unary_expression]
+    reduce: unary_expression_dec
+  - lex: [unary_operator, cast_expression]
+    reduce: unary_expression_unary
+  - lex: [tok_sizeof, unary_expression]
+    reduce: unary_expression_sizeof_expr
+  - lex: [tok_sizeof, '(', type_name, ')']
+    reduce: unary_expression_sizeof_type
 
 unary_operator:
-  lex:
-    - ["&"]
-    - ["*"]
-    - ["+"]
-    - ["-"]
-    - ["~"]
-    - ["!"]
+  - lex: ['&']
+    reduce: unary_operator
+  - lex: ['*']
+    reduce: unary_operator
+  - lex: ['+']
+    reduce: unary_operator
+  - lex: ['-']
+    reduce: unary_operator
+  - lex: ['~']
+    reduce: unary_operator
+  - lex: ['!']
+    reduce: unary_operator
 
 cast_expression:
-  lex:
-    - [unary_expression]
-    - ["(", type_name, ")", cast_expression]
+  - lex: [unary_expression]
+    reduce: cast_expression_direct
+  - lex: ['(', type_name, ')', cast_expression]
+    reduce: cast_expression_cast
 
 multiplicative_expression:
-  lex:
-    - [cast_expression]
-    - [multiplicative_expression, "*", cast_expression]
-    - [multiplicative_expression, "/", cast_expression]
-    - [multiplicative_expression, "%", cast_expression]
+  - lex: [cast_expression]
+    reduce: postfix_expression_direct
+  - lex: [multiplicative_expression, "*", cast_expression]
+    reduce: multiplicative_expression_mul
+  - lex: [multiplicative_expression, "/", cast_expression]
+    reduce: multiplicative_expression_div
+  - lex: [multiplicative_expression, "%", cast_expression]
+    reduce: multiplicative_expression_mod
 
 additive_expression:
-  lex:
-    - [multiplicative_expression]
-    - [additive_expression, "+", multiplicative_expression]
-    - [additive_expression, "-", multiplicative_expression]
+  - lex: [multiplicative_expression]
+    reduce: additive_expression_direct
+  - lex: [additive_expression, "+", multiplicative_expression]
+    reduce: additive_expression_add
+  - lex: [additive_expression, "-", multiplicative_expression]
+    reduce: additive_expression_sub
 
 shift_expression:
-  lex:
-    - [additive_expression]
-    - [shift_expression, tok_lshift, additive_expression]
-    - [shift_expression, tok_rshift, additive_expression]
+  - lex: [additive_expression]
+    reduce: shift_expression_direct
+  - lex: [shift_expression, tok_lshift, additive_expression]
+    reduce: shift_expression_lshift
+  - lex: [shift_expression, tok_rshift, additive_expression]
+    reduce: shift_expression_rshift
 
 relational_expression:
-  lex:
-    - [shift_expression]
-    - [relational_expression, "<", shift_expression]
-    - [relational_expression, ">", shift_expression]
-    - [relational_expression, tok_le, shift_expression]
-    - [relational_expression, tok_ge, shift_expression]
+  - lex: [shift_expression]
+    reduce: relational_expression_direct
+  - lex: [relational_expression, "<", shift_expression]
+    reduce: relational_expression_lt
+  - lex: [relational_expression, ">", shift_expression]
+    reduce: relational_expression_gt
+  - lex: [relational_expression, tok_le, shift_expression]
+    reduce: relational_expression_le
+  - lex: [relational_expression, tok_ge, shift_expression]
+    reduce: relational_expression_ge
 
 equality_expression:
-  lex:
-    - [relational_expression]
-    - [equality_expression, tok_eq, relational_expression]
-    - [equality_expression, tok_ne, relational_expression]
+  - lex: [relational_expression]
+    reduce: equality_expression_direct
+  - lex: [equality_expression, tok_eq, relational_expression]
+    reduce: equality_expression_eq
+  - lex: [equality_expression, tok_ne, relational_expression]
+    reduce: equality_expression_ne
 
 and_expression:
-  lex:
-    - [equality_expression]
-    - [and_expression, "&", equality_expression]
+  - lex: [equality_expression]
+    reduce: and_expression_direct
+  - lex: [and_expression, "&", equality_expression]
+    reduce: and_expression_and
 
 exclusive_or_expression:
-  lex:
-    - [and_expression]
-    - [exclusive_or_expression, "^", and_expression]
+  - lex: [and_expression]
+    reduce: exclusive_or_expression_direct
+  - lex: [exclusive_or_expression, "^", and_expression]
+    reduce: exclusive_or_expression_exclusive_or
 
 inclusive_or_expression:
-  lex:
-    - [exclusive_or_expression]
-    - [inclusive_or_expression, "|", exclusive_or_expression]
+  - lex: [exclusive_or_expression]
+    reduce: inclusive_or_expression_direct
+  - lex: [inclusive_or_expression, "|", exclusive_or_expression]
+    reduce: inclusive_or_expression_exclusive_or
+
+logical_and_expression:
+  - lex: [inclusive_or_expression]
+    reduce: logical_and_expression_direct
+  - lex: [logical_and_expression, tok_and, inclusive_or_expression]
+    reduce: logical_and_expression_and
+
+logical_or_expression:
+  - lex: [logical_and_expression]
+    reduce: logical_or_expression_direct
+  - lex: [logical_or_expression, tok_or, inclusive_or_expression]
+    reduce: logical_or_expression_and
+
+conditional_expression:
+  - lex: [logical_or_expression]
+    reduce: conditional_expression_direct
+  - lex: [logical_or_expression, '?', expression, ':', conditional_expression]
+    reduce: conditional_expression_cond
+
+assignment_expression:
+  - lex: [conditional_expression]
+    reduce: assignment_expression_direct
+  - lex: [unary_expression, assignment_operator, assignment_expression]
+    reduce: assignment_expression_assign
+
+assignment_operator:
+  - lex: ['=']
+    reduce: assignment_operator
+  - lex: [tok_add_assign]
+    reduce: assignment_operator
+  - lex: [tok_sub_assign]
+    reduce: assignment_operator
+  - lex: [tok_mul_assign]
+    reduce: assignment_operator
+  - lex: [tok_div_assign]
+    reduce: assignment_operator
+  - lex: [tok_mod_assign]
+    reduce: assignment_operator
+  - lex: [tok_lshift_assign]
+    reduce: assignment_operator
+  - lex: [tok_rshift_assign]
+    reduce: assignment_operator
+  - lex: [tok_and_assign]
+    reduce: assignment_operator
+  - lex: [tok_or_assign]
+    reduce: assignment_operator
+  - lex: [tok_xor_assign]
+    reduce: assignment_operator
+
+expression:
+  - lex: [assignment_expression]
+    reduce: expression_direct
+  - lex: [expression, ',', assignment_expression]
+    reduce: expression_list
+
+
+# argument_expression_list:
+#   lex:
+#     - [assignment_expression]
+#     - [argument_expression_list, ",", assignment_expression]
+
+# unary_expression:
+#   lex:
+#     - [postfix_expression]
+#     - [tok_inc, unary_expression]
+#     - [tok_dec, unary_expression]
+#     - [unary_operator, cast_expression]
+#     - [tok_sizeof, unary_expression]
+#     - [tok_sizeof, "(", type_name, ")"]
+
+# unary_operator:
+#   lex:
+#     - ["&"]
+#     - ["*"]
+#     - ["+"]
+#     - ["-"]
+#     - ["~"]
+#     - ["!"]
+
+# cast_expression:
+#   lex:
+#     - [unary_expression]
+#     - ["(", type_name, ")", cast_expression]

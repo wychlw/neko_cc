@@ -40,8 +40,7 @@ void _error(std::string msg, stream &ss, bool output_near)
 		for (; i >= 0; i--) {
 			ss.unget();
 		}
-		m+="\n\t           ^\n";
-		
+		m += "\n\t           ^\n";
 	}
 	throw std::runtime_error(m);
 }
@@ -51,6 +50,7 @@ void _error(std::string func, int line, std::string msg, stream &ss,
 {
 	_error(func + ", " + std::to_string(line) + " : " + msg, ss,
 	       output_near);
+	throw;
 }
 
 void info(std::string msg)

@@ -59,14 +59,30 @@ class __reg_sym {
 	}
 };
 
+/**
+ * @brief Register a symbol
+ * 
+ */
 #define reg_sym(name)                                                      \
 	__reg_sym __reg_sym_##name(#name, reinterpret_cast<void *>(&name), \
 				   typeid(decltype(name)))
+/**
+ * @brief Register a symbol with a pointer
+ * 
+ */
 #define reg_sym_ptr(name, ptr)                                           \
 	__reg_sym __reg_sym_##name(#name, reinterpret_cast<void *>(ptr), \
 				   typeid(decltype(*ptr)))
+/**
+ * @brief Get a symbol by name
+ * 
+ */
 #define get_sym(name) \
 	(*reinterpret_cast<sym_table[name].type *>(sym_table[name].ptr))
+/**
+ * @brief Get a symbol by name and cast it to a type
+ * 
+ */
 #define get_sym_type(name, type_name)                                \
 	(typeid(type_name) != sym_table[name].type ?                 \
 		 throw std::runtime_error("Type mismatch: " #name) : \
@@ -144,11 +160,22 @@ template <> class any_unique_sub<void> : public any_unique {
 	~any_unique_sub() = default;
 };
 
+/**
+ * @brief Make an any_unique object that store a value
+ * 
+ * @tparam T Type
+ * @param value The value to store
+ * @return std::shared_ptr<any_unique> The any_unique object
+ */
 template <typename T> std::shared_ptr<any_unique> make_any(const T &value)
 {
 	return std::make_shared<any_unique_sub<T> >(value);
 }
-
+/**
+ * @brief Make an empty any_unique object
+ * 
+ * @return std::shared_ptr<any_unique> 
+ */
 inline std::shared_ptr<any_unique> make_any()
 {
 	return std::make_shared<any_unique_sub<void> >();
