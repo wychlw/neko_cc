@@ -5,6 +5,10 @@ test
 
 *.tmp
 
+*.reprog.cc
+*.reprog.hh
+*_reprog
+
 .config.old
 
 gen_x86_asm.cc

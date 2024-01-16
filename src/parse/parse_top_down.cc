@@ -6,7 +6,7 @@
  * 
  */
 
-
+#include "parse/parse_base.hh"
 #include <algorithm>
 #include <cstddef>
 #include <stack>
@@ -29,13 +29,19 @@ using std::make_shared;
 
 std::unordered_map<size_t, type_t> glbl_type_map;
 
+stream *out_ss;
+string post_decl;
+
 /*
 translation_unit
 	{external_declaration}+
 */
-void translation_unit(stream &ss)
+void translation_unit(stream &ss, stream &out)
 {
 	debug();
+
+	out_ss = &out;
+	post_decl = "";
 
 	context_t ctx(nullptr, {}, {});
 	fun_env_t global_fun_env;
@@ -45,6 +51,8 @@ void translation_unit(stream &ss)
 	while (nxt_tok(ss).type != tok_eof) {
 		external_declaration(ss, ctx);
 	}
+
+	*out_ss << post_decl;
 }
 
 /*
@@ -116,8 +124,6 @@ void function_definition(stream &ss, context_t &ctx, var_t function,
 		error("Compound statement expected", ss, true);
 	}
 
-	reset_vreg();
-
 	function.name = get_global_name(function.name);
 	var_t func_var;
 	type_t func_var_type;
@@ -144,28 +150,38 @@ void function_definition(stream &ss, context_t &ctx, var_t function,
 	fun_env.is_func = 1;
 	fun_env.ret_type = *function.type->ret_type;
 	ctx_func.fun_env = make_shared<fun_env_t>(fun_env);
-	emit_func_begin(function, input_args);
-	inc_vreg();
+	auto emit_tmp = emit_func_begin(function, input_args);
+	*out_ss << emit_tmp.code;
 	for (size_t i = 0; i < args.size(); i++) {
-		args[i] = emit_alloc(*input_args[i].type, args[i].name);
-		emit_store(args[i], input_args[i]);
+		auto tmp = emit_alloca(*input_args[i].type, input_args[i].name);
+		args[i] = tmp.var;
+		*out_ss << tmp.code;
+		emit_tmp = emit_store(args[i], input_args[i]);
+		*out_ss << emit_tmp.code;
 		ctx_func.vars[args[i].name] = args[i];
 	}
 	compound_statement(ss, ctx_func);
 
 	if (function.type->ret_type->type == type_t::type_basic) {
 		if (is_type_void(*function.type->ret_type)) {
-			emit_ret();
+			auto tmp = emit_ret();
+			*out_ss << tmp.code;
 		} else {
-			emit_line("ret " +
-				  get_type_repr(*function.type->ret_type) +
-				  " zeroinitializer");
+			var_t ret_var;
+			ret_var.name = "zeroinitializer";
+			ret_var.type = function.type->ret_type;
+			auto tmp = emit_ret(ret_var);
+			*out_ss << tmp.code;
 		}
 	} else {
-		emit_line("ret " + get_type_repr(*function.type->ret_type) +
-			  " zeroinitializer");
+		var_t ret_var;
+		ret_var.name = "zeroinitializer";
+		ret_var.type = function.type->ret_type;
+		auto tmp = emit_ret(ret_var);
+		*out_ss << tmp.code;
 	}
-	emit_func_end();
+	emit_tmp = emit_func_end();
+	*out_ss << emit_tmp.code;
 }
 
 /*
@@ -237,9 +253,13 @@ void top_declaration(stream &ss, context_t &ctx, type_t type, var_t var)
 		match('=', ss);
 		initializer(ss, ctx, var);
 	} else if (var.type->type == type_t::type_func) {
-		var = emit_global_fun_decl(var);
+		auto tmp = emit_global_func_decl(var);
+		*out_ss << tmp.code;
+		var = tmp.var;
 	} else {
-		var = emit_global_decl(var);
+		auto tmp = emit_global_decl(var);
+		*out_ss << tmp.code;
+		var = tmp.var;
 	}
 	ctx.vars[var.name] = var;
 
@@ -302,9 +322,13 @@ void init_declarator(stream &ss, context_t &ctx, type_t type)
 		initializer(ss, ctx, var);
 	} else {
 		if (ctx.fun_env->is_func) {
-			var = emit_alloc(*var.type, var.name);
+			auto tmp = emit_alloca(*var.type, var.name);
+			*out_ss << tmp.code;
+			var = tmp.var;
 		} else {
-			var = emit_global_decl(var);
+			auto tmp = emit_global_decl(var);
+			*out_ss << tmp.code;
+			var = tmp.var;
 		}
 		ctx.vars[var.name] = var;
 	}
@@ -880,10 +904,13 @@ void initializer(stream &ss, context_t &ctx, var_t &var)
 		// match('}', ss);
 	} else {
 		if (ctx.fun_env->is_func) {
-			var = emit_alloc(*var.type, var.name);
+			auto tmp = emit_alloca(*var.type, var.name);
+			*out_ss << tmp.code;
+			var = tmp.var;
 			ctx.vars[var.name] = var;
 			var_t init_var = assignment_expression(ss, ctx);
-			emit_store(var, init_var);
+			auto emit_tmp = emit_store(var, init_var);
+			*out_ss << emit_tmp.code;
 		} else {
 			if (nxt_tok(ss).type != tok_int_lit &&
 			    nxt_tok(ss).type != tok_float_lit &&
@@ -905,12 +932,16 @@ void initializer(stream &ss, context_t &ctx, var_t &var)
 						ctx.get_enum(get_tok(ss).str);
 				}
 				if (is_type_i(*var.type)) {
-					var = emit_global_decl(
+					auto tmp = emit_global_decl(
 						var, std::to_string(init_val));
+					*out_ss << tmp.code;
+					var = tmp.var;
 				} else if (is_type_f(*var.type)) {
-					var = emit_global_decl(
+					auto tmp = emit_global_decl(
 						var, std::to_string(init_val) +
 							     ".0");
+					*out_ss << tmp.code;
+					var = tmp.var;
 				} else {
 					error("Initializer type mismatch", ss,
 					      true);
@@ -918,12 +949,17 @@ void initializer(stream &ss, context_t &ctx, var_t &var)
 			} else if (nxt_tok(ss).type == tok_float_lit) {
 				string init_val = get_tok(ss).str;
 				if (is_type_i(*var.type)) {
-					var = emit_global_decl(
+					auto tmp = emit_global_decl(
 						var,
 						std::to_string((int)std::stof(
 							init_val)));
+					*out_ss << tmp.code;
+					var = tmp.var;
 				} else if (is_type_f(*var.type)) {
-					var = emit_global_decl(var, init_val);
+					auto tmp =
+						emit_global_decl(var, init_val);
+					*out_ss << tmp.code;
+					var = tmp.var;
 				} else {
 					error("Initializer type mismatch", ss,
 					      true);
@@ -937,7 +973,10 @@ void initializer(stream &ss, context_t &ctx, var_t &var)
 					error("Initializer type mismatch", ss,
 					      true);
 				} else {
-					var = emit_global_decl(var, init_val);
+					auto tmp =
+						emit_global_decl(var, init_val);
+					*out_ss << tmp.code;
+					var = tmp.var;
 				}
 			}
 			ctx.vars[var.name] = var;
@@ -1235,12 +1274,16 @@ var_t unary_expression(stream &ss, context_t &ctx)
 		if (!rs.is_alloced) {
 			error("Cannot increment rvalue", ss, true);
 		}
-		var_t tmp = emit_load(rs);
+		auto emit_tmp = emit_load(rs);
+		*out_ss << emit_tmp.code;
+		var_t tmp = emit_tmp.var;
 		if (is_type_i(*tmp.type)) {
 			var_t inc_v;
 			inc_v.type = tmp.type;
 			inc_v.name = '1';
-			tmp = emit_add(tmp, inc_v);
+			emit_tmp = emit_add(tmp, inc_v);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else if (is_type_p(*tmp.type)) {
 			type_t ori_type = *tmp.type;
 			type_t i64_type;
@@ -1248,21 +1291,30 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			i64_type.type = type_t::type_basic;
 			i64_type.size = 8;
 			i64_type.is_long = 2;
-			tmp = emit_ptrtoint(tmp, i64_type);
+			emit_tmp = emit_ptrtoint(tmp, i64_type);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			var_t inc_v;
 			inc_v.type = make_shared<type_t>(i64_type);
 			inc_v.name = '8';
-			tmp = emit_add(tmp, inc_v);
-			tmp = emit_inttoptr(tmp, ori_type);
+			emit_tmp = emit_add(tmp, inc_v);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
+			emit_tmp = emit_inttoptr(tmp, ori_type);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else if (is_type_f(*tmp.type)) {
 			var_t inc_v;
 			inc_v.type = tmp.type;
 			inc_v.name = "1.0";
-			tmp = emit_fadd(tmp, inc_v);
+			emit_tmp = emit_fadd(tmp, inc_v);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else {
 			error("Cannot increment this type", ss, true);
 		}
-		emit_store(rs, tmp);
+		emit_tmp = emit_store(rs, tmp);
+		*out_ss << emit_tmp.code;
 		return rs;
 	}
 	if (nxt_tok(ss).type == tok_dec) {
@@ -1271,12 +1323,16 @@ var_t unary_expression(stream &ss, context_t &ctx)
 		if (!rs.is_alloced) {
 			error("Cannot decrement rvalue", ss, true);
 		}
-		var_t tmp = emit_load(rs);
+		auto emit_tmp = emit_load(rs);
+		*out_ss << emit_tmp.code;
+		var_t tmp = emit_tmp.var;
 		if (is_type_i(*tmp.type)) {
 			var_t inc_v;
 			inc_v.type = tmp.type;
 			inc_v.name = '1';
-			tmp = emit_sub(tmp, inc_v);
+			emit_tmp = emit_sub(tmp, inc_v);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else if (is_type_p(*tmp.type)) {
 			type_t ori_type = *tmp.type;
 			type_t i64_type;
@@ -1284,21 +1340,30 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			i64_type.type = type_t::type_basic;
 			i64_type.size = 8;
 			i64_type.is_long = 2;
-			tmp = emit_ptrtoint(tmp, i64_type);
+			auto emit_tmp = emit_ptrtoint(tmp, i64_type);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			var_t inc_v;
 			inc_v.type = make_shared<type_t>(i64_type);
 			inc_v.name = '8';
-			tmp = emit_sub(tmp, inc_v);
-			tmp = emit_inttoptr(tmp, ori_type);
+			emit_tmp = emit_sub(tmp, inc_v);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
+			emit_tmp = emit_inttoptr(tmp, ori_type);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else if (is_type_f(*tmp.type)) {
 			var_t inc_v;
 			inc_v.type = tmp.type;
 			inc_v.name = "1.0";
-			tmp = emit_fsub(tmp, inc_v);
+			emit_tmp = emit_fsub(tmp, inc_v);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else {
 			error("Cannot decrement this type", ss, true);
 		}
-		emit_store(rs, tmp);
+		emit_tmp = emit_store(rs, tmp);
+		*out_ss << emit_tmp.code;
 		return rs;
 	}
 	if (is_unary_operator(nxt_tok(ss))) {
@@ -1319,7 +1384,7 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			match('*', ss);
 			var_t tmp = cast_expression(ss, ctx);
 			// if (tmp.is_alloced) {
-			// 	tmp = emit_load(tmp);
+			// 	emit_tmp =  emit_load(tmp);*out_ss<<emit_tmp.code;tmp=emit_tmp.var;
 			// }
 			if (!is_type_p(*tmp.type)) {
 				error("Cannot dereference non-pointer type", ss,
@@ -1328,7 +1393,9 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			if (tmp.type->ptr_to->type == type_t::type_func) {
 				return tmp;
 			}
-			tmp = emit_load(tmp);
+			auto emit_tmp = emit_load(tmp);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			tmp.is_alloced = true;
 			return tmp;
 		}
@@ -1336,7 +1403,9 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			match('+', ss);
 			var_t tmp = cast_expression(ss, ctx);
 			if (tmp.is_alloced) {
-				tmp = emit_load(tmp);
+				auto emit_tmp = emit_load(tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			}
 			if (tmp.type->type != type_t::type_basic) {
 				error("Cannot use unary '+' on non-basic type",
@@ -1348,7 +1417,9 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			match('+', ss);
 			var_t tmp = cast_expression(ss, ctx);
 			if (tmp.is_alloced) {
-				tmp = emit_load(tmp);
+				auto emit_tmp = emit_load(tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			}
 			if (tmp.type->type != type_t::type_basic) {
 				error("Cannot use unary '-' on non-basic type",
@@ -1358,12 +1429,16 @@ var_t unary_expression(stream &ss, context_t &ctx)
 				var_t zero;
 				zero.type = tmp.type;
 				zero.name = '0';
-				tmp = emit_sub(zero, tmp);
+				auto emit_tmp = emit_sub(zero, tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else if (is_type_f(*tmp.type)) {
 				var_t zero;
 				zero.type = tmp.type;
 				zero.name = "0.0";
-				tmp = emit_fsub(zero, tmp);
+				auto emit_tmp = emit_fsub(zero, tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else {
 				error("Cannot use unary '-' on this type", ss,
 				      true);
@@ -1374,7 +1449,9 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			match('~', ss);
 			var_t tmp = cast_expression(ss, ctx);
 			if (tmp.is_alloced) {
-				tmp = emit_load(tmp);
+				auto emit_tmp = emit_load(tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			}
 			if (!is_type_i(*tmp.type)) {
 				error("Cannot use unary '~' on non-basic type",
@@ -1384,14 +1461,18 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			var_t minus_one;
 			minus_one.type = tmp.type;
 			minus_one.name = "-1";
-			tmp = emit_xor(tmp, minus_one);
+			auto emit_tmp = emit_xor(tmp, minus_one);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			return tmp;
 		}
 		if (nxt_tok(ss).type == '!') {
 			match('!', ss);
 			var_t tmp = cast_expression(ss, ctx);
 			if (tmp.is_alloced) {
-				tmp = emit_load(tmp);
+				auto emit_tmp = emit_load(tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			}
 			if (!is_type_i(*tmp.type)) {
 				error("Cannot use unary '!' on non-basic type",
@@ -1400,7 +1481,9 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = tmp.type;
 			zero.name = '0';
-			tmp = emit_eq(tmp, zero);
+			auto emit_tmp = emit_eq(tmp, zero);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			return tmp;
 		}
 	}
@@ -1415,7 +1498,9 @@ var_t unary_expression(stream &ss, context_t &ctx)
 			tmp = unary_expression(ss, ctx);
 		}
 		if (tmp.is_alloced) {
-			tmp = emit_load(tmp);
+			auto emit_tmp = emit_load(tmp);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		}
 		type_t i64_type;
 		i64_type.name = "i64";
@@ -1465,13 +1550,17 @@ var_t cast_expression(stream &ss, context_t &ctx)
 		match(')', ss);
 		var_t tmp = cast_expression(ss, ctx);
 		if (tmp.is_alloced) {
-			tmp = emit_load(tmp);
+			auto emit_tmp = emit_load(tmp);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		}
 		if (type.type != type_t::type_basic &&
 		    type.type != type_t::type_pointer) {
 			error("Cannot cast to non-basic type", ss, true);
 		}
-		var_t ret = emit_conv_to(tmp, type);
+		auto emit_tmp = emit_conv_to(tmp, type);
+		*out_ss << emit_tmp.code;
+		var_t ret = emit_tmp.var;
 		return ret;
 	}
 	return unary_expression(ss, ctx);
@@ -1586,7 +1675,8 @@ var_t primary_expression(stream &ss, context_t &ctx)
 		init_str += "\"";
 		init_str += tok.str;
 		init_str += "\"";
-		emit_post_const_decl(var, init_str);
+		auto tmp = emit_global_const_decl(var, init_str);
+		post_decl += tmp.code;
 		return var;
 	}
 	if (nxt_tok(ss).type == '(') {
@@ -1625,7 +1715,9 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				      true);
 			}
 			match(']', ss);
-			tmp = get_item_from_arrptr(tmp, idx);
+			auto emit_tmp = get_item_from_arrptr(tmp, idx);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else if (nxt_tok(ss).type == '(') {
 			match('(', ss);
 			std::vector<var_t> args;
@@ -1639,7 +1731,9 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				      true);
 			}
 			match(')', ss);
-			tmp = emit_call(tmp, args);
+			auto emit_tmp = emit_call(tmp, args);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 		} else if (nxt_tok(ss).type == '.') {
 			match('.', ss);
 			tok_t tok = get_tok(ss);
@@ -1667,7 +1761,10 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				if (offset == -1) {
 					error("Unknown member", ss, true);
 				}
-				tmp = get_item_from_structptr(tmp, offset);
+				auto emit_tmp =
+					get_item_from_structptr(tmp, offset);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 				tmp.is_alloced = true;
 			} else {
 				if (tmp.type->type != type_t::type_struct) {
@@ -1687,7 +1784,10 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				if (offset == -1) {
 					error("Unknown member", ss, true);
 				}
-				tmp = get_item_from_structobj(tmp, offset);
+				auto emit_tmp =
+					get_item_from_structobj(tmp, offset);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			}
 		} else if (nxt_tok(ss).type == tok_pointer) {
 			match(tok_pointer, ss);
@@ -1696,7 +1796,9 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				error("Identifier expected", ss, true);
 			}
 			if (tmp.is_alloced) {
-				tmp = emit_load(tmp);
+				auto emit_tmp = emit_load(tmp);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			}
 			if (tmp.type->type != type_t::type_pointer ||
 			    tmp.type->ptr_to->type != type_t::type_struct) {
@@ -1716,7 +1818,9 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 			if (offset == -1) {
 				error("Unknown member", ss, true);
 			}
-			tmp = get_item_from_structptr(tmp, offset);
+			auto emit_tmp = get_item_from_structptr(tmp, offset);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			tmp.is_alloced = true;
 		} else if (nxt_tok(ss).type == tok_inc) {
 			if (!tmp.is_alloced) {
@@ -1724,13 +1828,17 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 			}
 			match(tok_inc, ss);
 			var_t ori_var = tmp;
-			tmp = emit_load(tmp);
+			auto emit_tmp = emit_load(tmp);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			var_t ret_var = tmp;
 			if (is_type_i(*tmp.type)) {
 				var_t inc_v;
 				inc_v.type = tmp.type;
 				inc_v.name = '1';
-				tmp = emit_add(tmp, inc_v);
+				emit_tmp = emit_add(tmp, inc_v);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else if (is_type_p(*tmp.type)) {
 				type_t ori_type = *tmp.type;
 				type_t i64_type;
@@ -1738,21 +1846,30 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				i64_type.type = type_t::type_basic;
 				i64_type.size = 8;
 				i64_type.is_long = 2;
-				tmp = emit_ptrtoint(tmp, i64_type);
+				emit_tmp = emit_ptrtoint(tmp, i64_type);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 				var_t inc_v;
 				inc_v.type = make_shared<type_t>(i64_type);
 				inc_v.name = '8';
-				tmp = emit_add(tmp, inc_v);
-				tmp = emit_inttoptr(tmp, ori_type);
+				emit_tmp = emit_add(tmp, inc_v);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
+				emit_tmp = emit_inttoptr(tmp, ori_type);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else if (is_type_f(*tmp.type)) {
 				var_t inc_v;
 				inc_v.type = tmp.type;
 				inc_v.name = "1.0";
-				tmp = emit_fadd(tmp, inc_v);
+				emit_tmp = emit_fadd(tmp, inc_v);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else {
 				error("Cannot increment this type", ss, true);
 			}
-			emit_store(ori_var, tmp);
+			emit_tmp = emit_store(ori_var, tmp);
+			*out_ss << emit_tmp.code;
 			tmp = ret_var;
 		} else if (nxt_tok(ss).type == tok_dec) {
 			if (!tmp.is_alloced) {
@@ -1760,13 +1877,17 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 			}
 			match(tok_dec, ss);
 			var_t ori_var = tmp;
-			tmp = emit_load(tmp);
+			auto emit_tmp = emit_load(tmp);
+			*out_ss << emit_tmp.code;
+			tmp = emit_tmp.var;
 			var_t ret_var = tmp;
 			if (is_type_i(*tmp.type)) {
 				var_t inc_v;
 				inc_v.type = tmp.type;
 				inc_v.name = '1';
-				tmp = emit_sub(tmp, inc_v);
+				emit_tmp = emit_sub(tmp, inc_v);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else if (is_type_p(*tmp.type)) {
 				type_t ori_type = *tmp.type;
 				type_t i64_type;
@@ -1774,21 +1895,30 @@ var_t postfix_expression(stream &ss, context_t &ctx)
 				i64_type.type = type_t::type_basic;
 				i64_type.size = 8;
 				i64_type.is_long = 2;
-				tmp = emit_ptrtoint(tmp, i64_type);
+				auto emit_tmp = emit_ptrtoint(tmp, i64_type);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 				var_t inc_v;
 				inc_v.type = make_shared<type_t>(i64_type);
 				inc_v.name = '8';
-				tmp = emit_sub(tmp, inc_v);
-				tmp = emit_inttoptr(tmp, ori_type);
+				emit_tmp = emit_sub(tmp, inc_v);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
+				emit_tmp = emit_inttoptr(tmp, ori_type);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else if (is_type_f(*tmp.type)) {
 				var_t inc_v;
 				inc_v.type = tmp.type;
 				inc_v.name = "1.0";
-				tmp = emit_fsub(tmp, inc_v);
+				emit_tmp = emit_fsub(tmp, inc_v);
+				*out_ss << emit_tmp.code;
+				tmp = emit_tmp.var;
 			} else {
 				error("Cannot decrement this type", ss, true);
 			}
-			emit_store(ori_var, tmp);
+			emit_tmp = emit_store(ori_var, tmp);
+			*out_ss << emit_tmp.code;
 			tmp = ret_var;
 		}
 	}
@@ -1826,10 +1956,14 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			match('*', ss);
 			var_t rt = cast_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 				error("Cannot multiply non-basic type", ss,
@@ -1839,11 +1973,16 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 				error("Cannot multiply non-basic type", ss,
 				      true);
 			}
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 			if (is_type_i(*rs.type)) {
-				rs = emit_mul(rs, rt);
+				emit_tmp = emit_mul(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fmul(rs, rt);
+				emit_tmp = emit_fmul(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot multiply this type", ss, true);
 			}
@@ -1851,10 +1990,14 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			match('/', ss);
 			var_t rt = cast_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 				error("Cannot divide non-basic type", ss, true);
@@ -1862,14 +2005,21 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			if (!is_type_i(*rt.type) && !is_type_f(*rt.type)) {
 				error("Cannot divide non-basic type", ss, true);
 			}
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-				rs = emit_udiv(rs, rt);
+				emit_tmp = emit_udiv(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_i(*rs.type) &&
 				   !rs.type->is_unsigned) {
-				rs = emit_sdiv(rs, rt);
+				emit_tmp = emit_sdiv(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fdiv(rs, rt);
+				emit_tmp = emit_fdiv(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot divide this type", ss, true);
 			}
@@ -1877,10 +2027,14 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			match('/', ss);
 			var_t rt = cast_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 				error("Cannot mod non-basic type", ss, true);
@@ -1888,14 +2042,21 @@ var_t multiplicative_expression(stream &ss, context_t &ctx)
 			if (!is_type_i(*rt.type) && !is_type_f(*rt.type)) {
 				error("Cannot mod non-basic type", ss, true);
 			}
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-				rs = emit_urem(rs, rt);
+				emit_tmp = emit_urem(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_i(*rs.type) &&
 				   !rs.type->is_unsigned) {
-				rs = emit_srem(rs, rt);
+				emit_tmp = emit_srem(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_frem(rs, rt);
+				emit_tmp = emit_frem(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot mod this type", ss, true);
 			}
@@ -1918,10 +2079,14 @@ var_t additive_expression(stream &ss, context_t &ctx)
 			match('+', ss);
 			var_t rt = multiplicative_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 				error("Cannot add non-basic type", ss, true);
@@ -1929,11 +2094,16 @@ var_t additive_expression(stream &ss, context_t &ctx)
 			if (!is_type_i(*rt.type) && !is_type_f(*rt.type)) {
 				error("Cannot add non-basic type", ss, true);
 			}
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 			if (is_type_i(*rs.type)) {
-				rs = emit_add(rs, rt);
+				emit_tmp = emit_add(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fadd(rs, rt);
+				emit_tmp = emit_fadd(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot add this type", ss, true);
 			}
@@ -1941,10 +2111,14 @@ var_t additive_expression(stream &ss, context_t &ctx)
 			match('-', ss);
 			var_t rt = multiplicative_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 				error("Cannot subtract non-basic type", ss,
@@ -1954,11 +2128,16 @@ var_t additive_expression(stream &ss, context_t &ctx)
 				error("Cannot subtract non-basic type", ss,
 				      true);
 			}
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 			if (is_type_i(*rs.type)) {
-				rs = emit_sub(rs, rt);
+				emit_tmp = emit_sub(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fsub(rs, rt);
+				emit_tmp = emit_fsub(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot subtract this type", ss, true);
 			}
@@ -1981,10 +2160,14 @@ var_t shift_expression(stream &ss, context_t &ctx)
 			match(tok_lshift, ss);
 			var_t rt = additive_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type)) {
 				error("Cannot left shift non-basic type", ss,
@@ -1994,16 +2177,23 @@ var_t shift_expression(stream &ss, context_t &ctx)
 				error("Cannot left shift non-basic type", ss,
 				      true);
 			}
-			emit_match_type(rs, rt);
-			rs = emit_shl(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
+			emit_tmp = emit_shl(rs, rt);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		} else if (nxt_tok(ss).type == tok_rshift) {
 			match(tok_rshift, ss);
 			var_t rt = additive_expression(ss, ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (rt.is_alloced) {
-				rt = emit_load(rt);
+				auto emit_tmp = emit_load(rt);
+				*out_ss << emit_tmp.code;
+				rt = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type)) {
 				error("Cannot right shift non-basic type", ss,
@@ -2013,11 +2203,16 @@ var_t shift_expression(stream &ss, context_t &ctx)
 				error("Cannot right shift non-basic type", ss,
 				      true);
 			}
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 			if (rs.type->is_unsigned) {
-				rs = emit_lshr(rs, rt);
+				emit_tmp = emit_lshr(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
-				rs = emit_ashr(rs, rt);
+				emit_tmp = emit_ashr(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 		}
 	}
@@ -2035,7 +2230,9 @@ var_t relational_expression(stream &ss, context_t &ctx)
 	var_t rs = shift_expression(ss, ctx);
 	while (is_rel_op(nxt_tok(ss))) {
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 			error("Cannot compare non-basic type", ss, true);
@@ -2043,53 +2240,80 @@ var_t relational_expression(stream &ss, context_t &ctx)
 		tok_t ntok = get_tok(ss);
 		var_t rt = shift_expression(ss, ctx);
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!is_type_i(*rt.type) && !is_type_f(*rt.type)) {
 			error("Cannot compare non-basic type", ss, true);
 		}
-		emit_match_type(rs, rt);
+		auto emit_tmp = emit_match_type(rs, rt);
+		*out_ss << emit_tmp.code;
 		if (ntok.type == '<') {
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-				rs = emit_ult(rs, rt);
+				emit_tmp = emit_ult(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_i(*rs.type) &&
 				   !rs.type->is_unsigned) {
-				rs = emit_slt(rs, rt);
+				emit_tmp = emit_slt(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_flt(rs, rt);
+				emit_tmp = emit_flt(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot compare this type", ss, true);
 			}
 		} else if (ntok.type == '>') {
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-				rs = emit_ugt(rs, rt);
+				emit_tmp = emit_ugt(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_i(*rs.type) &&
 				   !rs.type->is_unsigned) {
-				rs = emit_sgt(rs, rt);
+				emit_tmp = emit_sgt(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fgt(rs, rt);
+				emit_tmp = emit_fgt(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot compare this type", ss, true);
 			}
 		} else if (ntok.type == tok_ge) {
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-				rs = emit_uge(rs, rt);
+				emit_tmp = emit_uge(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_i(*rs.type) &&
 				   !rs.type->is_unsigned) {
-				rs = emit_sge(rs, rt);
+				emit_tmp = emit_sge(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fge(rs, rt);
+				emit_tmp = emit_fge(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot compare this type", ss, true);
 			}
 		} else if (ntok.type == tok_le) {
 			if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-				rs = emit_ule(rs, rt);
+				emit_tmp = emit_ule(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_i(*rs.type) &&
 				   !rs.type->is_unsigned) {
-				rs = emit_sle(rs, rt);
+				emit_tmp = emit_sle(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fle(rs, rt);
+				emit_tmp = emit_fle(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot compare this type", ss, true);
 			}
@@ -2109,7 +2333,9 @@ var_t equality_expression(stream &ss, context_t &ctx)
 	var_t rs = relational_expression(ss, ctx);
 	while (is_eq_op(nxt_tok(ss))) {
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
 		    !is_type_p(*rs.type)) {
@@ -2118,7 +2344,9 @@ var_t equality_expression(stream &ss, context_t &ctx)
 		tok_t ntok = get_tok(ss);
 		var_t rt = relational_expression(ss, ctx);
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!is_type_i(*rt.type) && !is_type_f(*rt.type) &&
 		    !is_type_p(*rt.type)) {
@@ -2131,27 +2359,40 @@ var_t equality_expression(stream &ss, context_t &ctx)
 			i64_type.type = type_t::type_basic;
 			i64_type.size = 8;
 			i64_type.is_long = 2;
-			rs = emit_ptrtoint(rs, i64_type);
-			rt = emit_ptrtoint(rt, i64_type);
+			auto emit_tmp = emit_ptrtoint(rs, i64_type);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
+			emit_tmp = emit_ptrtoint(rt, i64_type);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		} else if (!is_type_p(*rs.type) && !is_type_p(*rt.type)) {
-			emit_match_type(rs, rt);
+			auto emit_tmp = emit_match_type(rs, rt);
+			*out_ss << emit_tmp.code;
 		} else {
 			error("Cannot compare pointer with non-pointer", ss,
 			      true);
 		}
 		if (ntok.type == tok_eq) {
 			if (is_type_i(*rs.type)) {
-				rs = emit_eq(rs, rt);
+				auto emit_tmp = emit_eq(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_feq(rs, rt);
+				auto emit_tmp = emit_feq(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot compare this type", ss, true);
 			}
 		} else if (ntok.type == tok_ne) {
 			if (is_type_i(*rs.type)) {
-				rs = emit_ne(rs, rt);
+				auto emit_tmp = emit_ne(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else if (is_type_f(*rs.type)) {
-				rs = emit_fne(rs, rt);
+				auto emit_tmp = emit_fne(rs, rt);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			} else {
 				error("Cannot compare this type", ss, true);
 			}
@@ -2173,10 +2414,14 @@ var_t and_expression(stream &ss, context_t &ctx)
 		match('&', ss);
 		var_t rt = equality_expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type)) {
 			error("Cannot and non-int type", ss, true);
@@ -2184,8 +2429,11 @@ var_t and_expression(stream &ss, context_t &ctx)
 		if (!is_type_i(*rt.type)) {
 			error("Cannot and non-int type", ss, true);
 		}
-		emit_match_type(rs, rt);
-		rs = emit_and(rs, rt);
+		auto emit_tmp = emit_match_type(rs, rt);
+		*out_ss << emit_tmp.code;
+		emit_tmp = emit_and(rs, rt);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	return rs;
 }
@@ -2203,10 +2451,14 @@ var_t exclusive_or_expression(stream &ss, context_t &ctx)
 		match('^', ss);
 		var_t rt = and_expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type)) {
 			error("Cannot xor non-int type", ss, true);
@@ -2214,8 +2466,11 @@ var_t exclusive_or_expression(stream &ss, context_t &ctx)
 		if (!is_type_i(*rt.type)) {
 			error("Cannot xor non-int type", ss, true);
 		}
-		emit_match_type(rs, rt);
-		rs = emit_xor(rs, rt);
+		auto emit_tmp = emit_match_type(rs, rt);
+		*out_ss << emit_tmp.code;
+		emit_tmp = emit_xor(rs, rt);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	return rs;
 }
@@ -2233,10 +2488,14 @@ var_t inclusive_or_expression(stream &ss, context_t &ctx)
 		match('|', ss);
 		var_t rt = exclusive_or_expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type)) {
 			error("Cannot or non-int type", ss, true);
@@ -2244,8 +2503,11 @@ var_t inclusive_or_expression(stream &ss, context_t &ctx)
 		if (!is_type_i(*rt.type)) {
 			error("Cannot or non-int type", ss, true);
 		}
-		emit_match_type(rs, rt);
-		rs = emit_or(rs, rt);
+		auto emit_tmp = emit_match_type(rs, rt);
+		*out_ss << emit_tmp.code;
+		emit_tmp = emit_or(rs, rt);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	return rs;
 }
@@ -2263,10 +2525,14 @@ var_t logical_and_expression(stream &ss, context_t &ctx)
 		match(tok_land, ss);
 		var_t rt = inclusive_or_expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!rs.type->is_bool) {
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
@@ -2276,7 +2542,9 @@ var_t logical_and_expression(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rs.type;
 			zero.name = "zeroinitializer";
-			rs = emit_ne(rs, zero);
+			auto emit_tmp = emit_ne(rs, zero);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (!rt.type->is_bool) {
 			if (!is_type_i(*rt.type) && !is_type_f(*rt.type) &&
@@ -2286,9 +2554,13 @@ var_t logical_and_expression(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rt.type;
 			zero.name = "zeroinitializer";
-			rt = emit_ne(rt, zero);
+			auto emit_tmp = emit_ne(rt, zero);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
-		rs = emit_and(rs, rt);
+		auto emit_tmp = emit_and(rs, rt);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	return rs;
 }
@@ -2306,10 +2578,14 @@ var_t logical_or_expression(stream &ss, context_t &ctx)
 		match(tok_lor, ss);
 		var_t rt = logical_and_expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			auto emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			auto emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
 		if (!rs.type->is_bool) {
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
@@ -2319,7 +2595,9 @@ var_t logical_or_expression(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rs.type;
 			zero.name = "zeroinitializer";
-			rs = emit_ne(rs, zero);
+			auto emit_tmp = emit_ne(rs, zero);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (!rt.type->is_bool) {
 			if (!is_type_i(*rt.type) && !is_type_f(*rt.type) &&
@@ -2329,9 +2607,13 @@ var_t logical_or_expression(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rt.type;
 			zero.name = "zeroinitializer";
-			rt = emit_ne(rt, zero);
+			auto emit_tmp = emit_ne(rt, zero);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
-		rs = emit_or(rs, rt);
+		auto emit_tmp = emit_or(rs, rt);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	return rs;
 }
@@ -2355,7 +2637,9 @@ var_t conditional_expression(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rs.type;
 			zero.name = "zeroinitializer";
-			rs = emit_ne(rs, zero);
+			auto emit_tmp = emit_ne(rs, zero);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		match('?', ss);
 		string label_true = get_label();
@@ -2363,40 +2647,62 @@ var_t conditional_expression(stream &ss, context_t &ctx)
 		string label_true_conv = get_label();
 		string label_false_conv = get_label();
 		string label_end = get_label();
-		emit_br(rs, label_true, label_false);
+		auto emit_tmp = emit_br(rs, label_true, label_false);
+		*out_ss << emit_tmp.code;
 
-		emit_label(label_true);
+		emit_tmp = emit_label(label_true);
+		*out_ss << emit_tmp.code;
+
 		var_t rt = expression(ss, ctx);
 		if (rt.is_alloced) {
-			rt = emit_load(rt);
+			emit_tmp = emit_load(rt);
+			*out_ss << emit_tmp.code;
+			rt = emit_tmp.var;
 		}
-		emit_br(label_true_conv);
+		emit_tmp = emit_br(label_true_conv);
+		*out_ss << emit_tmp.code;
 
 		match(':', ss);
-		emit_label(label_false);
+		emit_tmp = emit_label(label_false);
+		*out_ss << emit_tmp.code;
+
 		var_t rr = conditional_expression(ss, ctx);
 		if (rr.is_alloced) {
-			rr = emit_load(rr);
+			emit_tmp = emit_load(rr);
+			*out_ss << emit_tmp.code;
+			rr = emit_tmp.var;
 		}
-		emit_br(label_false_conv);
+		emit_tmp = emit_br(label_false_conv);
+		*out_ss << emit_tmp.code;
 
 		bool conv_to_rt = should_conv_to_first(rt, rr);
 		bool conv_to_rr = should_conv_to_first(rr, rt);
 
-		emit_label(label_true_conv);
+		emit_tmp = emit_label(label_true_conv);
+		*out_ss << emit_tmp.code;
 		if (conv_to_rt) {
-			rt = emit_conv_to(rt, *rr.type);
+			emit_tmp = emit_conv_to(rt, *rr.type);
+			*out_ss << emit_tmp.code;
+			rr = emit_tmp.var;
 		}
-		emit_br(label_end);
+		emit_tmp = emit_br(label_end);
+		*out_ss << emit_tmp.code;
 
-		emit_label(label_false_conv);
+		emit_tmp = emit_label(label_false_conv);
+		*out_ss << emit_tmp.code;
 		if (conv_to_rr) {
-			rr = emit_conv_to(rr, *rt.type);
+			emit_tmp = emit_conv_to(rr, *rt.type);
+			*out_ss << emit_tmp.code;
+			rr = emit_tmp.var;
 		}
-		emit_br(label_end);
+		emit_tmp = emit_br(label_end);
+		*out_ss << emit_tmp.code;
 
-		emit_label(label_end);
-		rs = emit_phi(rt, label_true_conv, rr, label_false_conv);
+		emit_tmp = emit_label(label_end);
+		*out_ss << emit_tmp.code;
+		emit_tmp = emit_phi(rt, label_true_conv, rr, label_false_conv);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 
 	return rs;
@@ -2417,14 +2723,21 @@ void assignment_operator(stream &ss, var_t rd, var_t rs, tok_t op)
 		error("Cannot assign to lvalue", ss, true);
 	}
 	if (rs.is_alloced) {
-		rs = emit_load(rs);
+		auto emit_tmp = emit_load(rs);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	if (op.type == '=') {
-		rs = emit_conv_to(rs, *rd.type->ptr_to);
-		emit_store(rd, rs);
+		auto emit_tmp = emit_conv_to(rs, *rd.type->ptr_to);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
+		emit_tmp = emit_store(rd, rs);
+		*out_ss << emit_tmp.code;
 		return;
 	}
-	var_t rt = emit_load(rd);
+	auto emit_tmp = emit_load(rd);
+	*out_ss << emit_tmp.code;
+	var_t rt = emit_tmp.var;
 	if (is_type_p(*rs.type)) {
 		if (op.type != tok_add_assign && op.type != tok_sub_assign) {
 			error("Cannot assign pointer with this operator", ss,
@@ -2435,7 +2748,9 @@ void assignment_operator(stream &ss, var_t rd, var_t rs, tok_t op)
 		i64_type.type = type_t::type_basic;
 		i64_type.size = 8;
 		i64_type.is_long = 2;
-		rs = emit_ptrtoint(rs, i64_type);
+		emit_tmp = emit_ptrtoint(rs, i64_type);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	if (!is_type_i(*rs.type) && !is_type_f(*rs.type)) {
 		error("Cannot assign non-basic type", ss, true);
@@ -2450,78 +2765,120 @@ void assignment_operator(stream &ss, var_t rd, var_t rs, tok_t op)
 		i64_type.type = type_t::type_basic;
 		i64_type.size = 8;
 		i64_type.is_long = 2;
-		rt = emit_ptrtoint(rt, i64_type);
+		emit_tmp = emit_ptrtoint(rt, i64_type);
+		*out_ss << emit_tmp.code;
+		var_t rt = emit_tmp.var;
 	}
 	if (!is_type_i(*rt.type) && !is_type_f(*rt.type)) {
 		error("Cannot assign non-basic type", ss, true);
 	}
-	emit_match_type(rs, rt);
+	emit_tmp = emit_match_type(rs, rt);
+	*out_ss << emit_tmp.code;
 	if (op.type == tok_add_assign) {
 		if (is_type_i(*rs.type)) {
-			rt = emit_add(rt, rs);
+			emit_tmp = emit_add(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_f(*rs.type)) {
-			rt = emit_fadd(rt, rs);
+			emit_tmp = emit_fadd(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		}
 	} else if (op.type == tok_sub_assign) {
 		if (is_type_i(*rs.type)) {
-			rt = emit_sub(rt, rs);
+			emit_tmp = emit_sub(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_f(*rs.type)) {
-			rt = emit_fsub(rt, rs);
+			emit_tmp = emit_fsub(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		}
 	} else if (op.type == tok_mul_assign) {
 		if (is_type_i(*rs.type)) {
-			rt = emit_mul(rt, rs);
+			emit_tmp = emit_mul(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_f(*rs.type)) {
-			rt = emit_fmul(rt, rs);
+			emit_tmp = emit_fmul(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		}
 	} else if (op.type == tok_div_assign) {
 		if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-			rt = emit_udiv(rt, rs);
+			emit_tmp = emit_udiv(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_i(*rs.type) && !rs.type->is_unsigned) {
-			rt = emit_sdiv(rt, rs);
+			emit_tmp = emit_sdiv(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_f(*rs.type)) {
-			rt = emit_fdiv(rt, rs);
+			emit_tmp = emit_fdiv(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		}
 	} else if (op.type == tok_mod_assign) {
 		if (is_type_i(*rs.type) && rs.type->is_unsigned) {
-			rt = emit_urem(rt, rs);
+			emit_tmp = emit_urem(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_i(*rs.type) && !rs.type->is_unsigned) {
-			rt = emit_srem(rt, rs);
+			emit_tmp = emit_srem(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else if (is_type_f(*rs.type)) {
-			rt = emit_frem(rt, rs);
+			emit_tmp = emit_frem(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		}
 	} else if (op.type == tok_lshift_assign) {
 		if (!is_type_i(*rs.type)) {
 			error("Cannot left shift non-int type", ss, true);
 		}
-		rt = emit_shl(rt, rs);
+		emit_tmp = emit_shl(rt, rs);
+		*out_ss << emit_tmp.code;
+		var_t rt = emit_tmp.var;
 	} else if (op.type == tok_rshift_assign) {
 		if (!is_type_i(*rs.type)) {
 			error("Cannot right shift non-int type", ss, true);
 		}
 		if (rt.type->is_unsigned) {
-			rt = emit_lshr(rt, rs);
+			emit_tmp = emit_lshr(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		} else {
-			rt = emit_ashr(rt, rs);
+			emit_tmp = emit_ashr(rt, rs);
+			*out_ss << emit_tmp.code;
+			var_t rt = emit_tmp.var;
 		}
 	} else if (op.type == tok_and_assign) {
 		if (!is_type_i(*rs.type)) {
 			error("Cannot and non-int type", ss, true);
 		}
-		rt = emit_and(rt, rs);
+		emit_tmp = emit_and(rt, rs);
+		*out_ss << emit_tmp.code;
+		var_t rt = emit_tmp.var;
 	} else if (op.type == tok_xor_assign) {
 		if (!is_type_i(*rs.type)) {
 			error("Cannot xor non-int type", ss, true);
 		}
-		rt = emit_xor(rt, rs);
+		emit_tmp = emit_xor(rt, rs);
+		*out_ss << emit_tmp.code;
+		var_t rt = emit_tmp.var;
 	} else if (op.type == tok_or_assign) {
 		if (!is_type_i(*rs.type)) {
 			error("Cannot or non-int type", ss, true);
 		}
-		rt = emit_or(rt, rs);
+		emit_tmp = emit_or(rt, rs);
+		*out_ss << emit_tmp.code;
+		var_t rt = emit_tmp.var;
 	}
-	rt = emit_conv_to(rt, *rd.type->ptr_to);
-	emit_store(rd, rt);
+	emit_tmp = emit_conv_to(rt, *rd.type->ptr_to);
+	*out_ss << emit_tmp.code;
+	rt = emit_tmp.var;
+	emit_tmp = emit_store(rd, rt);
+	*out_ss << emit_tmp.code;
 }
 
 /*
@@ -2604,7 +2961,9 @@ void jump_statement(stream &ss, context_t &ctx)
 		if (ctx.beg_label.empty()) {
 			error("Cannot continue outside of loop", ss, true);
 		}
-		emit_br(ctx.beg_label);
+		auto emit_tmp = emit_br(ctx.beg_label);
+		*out_ss << emit_tmp.code;
+
 	} else if (nxt_tok(ss).type == tok_break) {
 		match(tok_break, ss);
 		match(';', ss);
@@ -2612,7 +2971,9 @@ void jump_statement(stream &ss, context_t &ctx)
 			error("Cannot break outside of loop or switch", ss,
 			      true);
 		}
-		emit_br(ctx.end_label);
+		auto emit_tmp = emit_br(ctx.end_label);
+		*out_ss << emit_tmp.code;
+
 	} else if (nxt_tok(ss).type == tok_return) {
 		match(tok_return, ss);
 		if (nxt_tok(ss).type == ';') {
@@ -2630,11 +2991,16 @@ void jump_statement(stream &ss, context_t &ctx)
 			var_t rs = expression(ss, ctx);
 			match(';', ss);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				auto emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (ctx.fun_env->ret_type.type == type_t::type_basic &&
 			    rs.type->type == type_t::type_basic) {
-				rs = emit_conv_to(rs, ctx.fun_env->ret_type);
+				auto emit_tmp =
+					emit_conv_to(rs, ctx.fun_env->ret_type);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 				emit_ret(rs);
 			} else if (ctx.fun_env->ret_type == *rs.type) {
 				emit_ret(rs);
@@ -2661,7 +3027,9 @@ void selection_statement(stream &ss, context_t &ctx)
 	match('(', ss);
 	var_t rs = expression(ss, ctx);
 	if (rs.is_alloced) {
-		rs = emit_load(rs);
+		auto emit_tmp = emit_load(rs);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
 	    !is_type_p(*rs.type)) {
@@ -2671,23 +3039,37 @@ void selection_statement(stream &ss, context_t &ctx)
 		var_t zero;
 		zero.type = rs.type;
 		zero.name = "zeroinitializer";
-		rs = emit_ne(rs, zero);
+		auto emit_tmp = emit_ne(rs, zero);
+		*out_ss << emit_tmp.code;
+		rs = emit_tmp.var;
 	}
 	match(')', ss);
-	emit_br(rs, label_true, label_false);
+	auto emit_tmp = emit_br(rs, label_true, label_false);
+	*out_ss << emit_tmp.code;
 
-	emit_label(label_true);
+	emit_tmp = emit_label(label_true);
+	*out_ss << emit_tmp.code;
+
 	statement(ss, ctx);
 	if (nxt_tok(ss).type != tok_else) {
-		emit_label(label_false);
+		emit_tmp = emit_label(label_false);
+		*out_ss << emit_tmp.code;
+
 		return;
 	}
-	emit_br(label_end);
+	emit_tmp = emit_br(label_end);
+	*out_ss << emit_tmp.code;
+
 	match(tok_else, ss);
-	emit_label(label_false);
+	emit_tmp = emit_label(label_false);
+	*out_ss << emit_tmp.code;
+
 	statement(ss, ctx);
-	emit_br(label_end);
-	emit_label(label_end);
+	emit_tmp = emit_br(label_end);
+	*out_ss << emit_tmp.code;
+
+	emit_tmp = emit_label(label_end);
+	*out_ss << emit_tmp.code;
 }
 
 /*
@@ -2709,12 +3091,18 @@ void iteration_statement(stream &ss, context_t &ctx)
 		ctx.beg_label = label_beg;
 		ctx.end_label = label_end;
 
-		emit_br(label_beg);
-		emit_label(label_beg);
+		auto emit_tmp = emit_br(label_beg);
+		*out_ss << emit_tmp.code;
+
+		emit_tmp = emit_label(label_beg);
+		*out_ss << emit_tmp.code;
+
 		match('(', ss);
 		var_t rs = expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
 		    !is_type_p(*rs.type)) {
@@ -2725,15 +3113,23 @@ void iteration_statement(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rs.type;
 			zero.name = "zeroinitializer";
-			rs = emit_ne(rs, zero);
+			emit_tmp = emit_ne(rs, zero);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		match(')', ss);
-		emit_br(rs, label_rbeg, label_end);
+		emit_tmp = emit_br(rs, label_rbeg, label_end);
+		*out_ss << emit_tmp.code;
 
-		emit_label(label_rbeg);
+		emit_tmp = emit_label(label_rbeg);
+		*out_ss << emit_tmp.code;
+
 		statement(ss, ctx);
-		emit_br(label_beg);
-		emit_label(label_end);
+		emit_tmp = emit_br(label_beg);
+		*out_ss << emit_tmp.code;
+
+		emit_tmp = emit_label(label_end);
+		*out_ss << emit_tmp.code;
 
 		ctx.beg_label = "";
 		ctx.end_label = "";
@@ -2747,14 +3143,20 @@ void iteration_statement(stream &ss, context_t &ctx)
 		ctx.beg_label = label_beg;
 		ctx.end_label = label_end;
 
-		emit_br(label_beg);
-		emit_label(label_beg);
+		auto emit_tmp = emit_br(label_beg);
+		*out_ss << emit_tmp.code;
+
+		emit_tmp = emit_label(label_beg);
+		*out_ss << emit_tmp.code;
+
 		statement(ss, ctx);
 		match(tok_while, ss);
 		match('(', ss);
 		var_t rs = expression(ss, ctx);
 		if (rs.is_alloced) {
-			rs = emit_load(rs);
+			emit_tmp = emit_load(rs);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
 		    !is_type_p(*rs.type)) {
@@ -2765,12 +3167,17 @@ void iteration_statement(stream &ss, context_t &ctx)
 			var_t zero;
 			zero.type = rs.type;
 			zero.name = "zeroinitializer";
-			rs = emit_ne(rs, zero);
+			emit_tmp = emit_ne(rs, zero);
+			*out_ss << emit_tmp.code;
+			rs = emit_tmp.var;
 		}
 		match(')', ss);
 		match(';', ss);
-		emit_br(rs, label_beg, label_end);
-		emit_label(label_end);
+		emit_tmp = emit_br(rs, label_beg, label_end);
+		*out_ss << emit_tmp.code;
+
+		emit_tmp = emit_label(label_end);
+		*out_ss << emit_tmp.code;
 
 		ctx.beg_label = "";
 		ctx.end_label = "";
@@ -2791,16 +3198,24 @@ void iteration_statement(stream &ss, context_t &ctx)
 		match('(', ss);
 		// init expr
 		expression_statement(ss, inner_ctx);
-		emit_br(label_cond);
+		auto emit_tmp = emit_br(label_cond);
+		*out_ss << emit_tmp.code;
+
 		// cond expr
-		emit_label(label_cond);
+		emit_tmp = emit_label(label_cond);
+		*out_ss << emit_tmp.code;
+
 		if (nxt_tok(ss).type == ';') {
 			match(';', ss);
-			emit_br(label_rbeg);
+			emit_tmp = emit_br(label_rbeg);
+			*out_ss << emit_tmp.code;
+
 		} else {
 			var_t rs = expression(ss, inner_ctx);
 			if (rs.is_alloced) {
-				rs = emit_load(rs);
+				emit_tmp = emit_load(rs);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			if (!is_type_i(*rs.type) && !is_type_f(*rs.type) &&
 			    !is_type_p(*rs.type)) {
@@ -2811,24 +3226,34 @@ void iteration_statement(stream &ss, context_t &ctx)
 				var_t zero;
 				zero.type = rs.type;
 				zero.name = "zeroinitializer";
-				rs = emit_ne(rs, zero);
+				emit_tmp = emit_ne(rs, zero);
+				*out_ss << emit_tmp.code;
+				rs = emit_tmp.var;
 			}
 			match(';', ss);
-			emit_br(rs, label_rbeg, label_end);
+			emit_tmp = emit_br(rs, label_rbeg, label_end);
+			*out_ss << emit_tmp.code;
 		}
 
 		// begin expr
-		emit_label(label_beg);
+		emit_tmp = emit_label(label_beg);
+		*out_ss << emit_tmp.code;
+
 		expression(ss, inner_ctx);
 		match(')', ss);
-		emit_br(label_cond);
+		emit_tmp = emit_br(label_cond);
+		*out_ss << emit_tmp.code;
 
 		// repeat expr
-		emit_label(label_rbeg);
-		statement(ss, inner_ctx);
-		emit_br(label_beg);
+		emit_tmp = emit_label(label_rbeg);
+		*out_ss << emit_tmp.code;
 
-		emit_label(label_end);
+		statement(ss, inner_ctx);
+		emit_tmp = emit_br(label_beg);
+		*out_ss << emit_tmp.code;
+
+		emit_tmp = emit_label(label_end);
+		*out_ss << emit_tmp.code;
 	}
 }
 }
